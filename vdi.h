@@ -1,33 +1,36 @@
-#ifdef VDIHEADER
+#ifndef VDIHEADER
 #define VDIHEADER
-
-typedef struct vdi
+ struct vdi
   {
 
-    /*  0*/ unsigned char	hdr[64];
-    /* 64*/ unsigned long	imgsignature;		/* VDI_HEADER_MAGIC		*/
-    /* 68*/ int			maj, min;	/* VDH_HEADER_MAJOR/MINOR	*/
+    /*  0*/ unsigned int	hdr[4];
+    /* 64*/ unsigned int	imgsignature;		/* VDI_HEADER_MAGIC		*/
+    /* 68*/ unsigned int	verison;	/* VDH_HEADER_MAJOR/MINOR	*/
     /* len is calculated from here	*/
-    /* 72*/ long		len;		/* VDI_HEADER_LEN_MIN to _MAX	*/
-    /* 76*/ long		typ;		/* ?				*/
-    /* 80*/ long		flags;		/* ?				*/
-    /* 84*/ unsigned char	desc[256];	/* ?				*/
-    /*340*/ unsigned long	block;		/* offset to block info		*/
-    /*344*/ unsigned long	data;		/* offset to data		*/
-    /*348*/ long		cyl;		/* number of cylinders		*/
-    /*352*/ long		head;		/* number of heads to emulate	*/
-    /*356*/ long		sec;		/* number of sectors per track	*/
-    /*360*/ long		secsize;	/* number of bytes in a sector	*/
-    /*364*/ long		unk1;
-    /*368*/ int64_t		disksize;	/* Total size of the disk, in byte	*/
-    /*376*/ long		blocksize;	/* Size of a block: 1M		*/
-    /*380*/ long		extradata;	/* unknown			*/
-    /*384*/ long		blocks;		/* Number of blocks in image	*/
-    /*388*/ long		blockuse;	/* Total number of blocks used	*/
+    /* 72*/ unsigned int	hsize;		/* VDI_HEADER_LEN_MIN to _MAX	*/
+    /* 76*/ unsigned int		imgtype;		/* ?				*/
+    /* 80*/ unsigned int  imgflags;		/* ?				*/
+    /* 84*/ unsigned int	desc[64];	/* ?				*/
+    /*340*/ unsigned int	block;		/* offset to block info		*/
+    /*344*/ unsigned int	blockdata;		/* offset to data		*/
+    /*348*/ unsigned int	cyl;		/* number of cylinders		*/
+    /*352*/ unsigned int		head;		/* number of heads to emulate	*/
+    /*356*/ unsigned int	sec;		/* number of sectors per track	*/
+    /*360*/ unsigned int		secsize;	/* number of bytes in a sector	*/
+    /*364*/ unsigned int		unk1;
+    /*368*/ unsigned int disksize[2];	/* Total size of the disk, in byte	*/
+    /*376*/ unsigned int locksize;	/* Size of a block: 1M		*/
+    /*380*/ unsigned int		extradata;	/* unknown			*/
+    /*384*/ unsigned int blocks;		/* Number of blocks in image	*/
+    /*388*/ unsigned int blockuse;	/* Total number of blocks used	*/
 
-    /*392*/ UUID		uuid, uusnap, uulink, uupar;
 
-    /*456*/ unsigned char	unk2[16];	/* no more in header len 0x180	*/
-    /*480*/ unsigned char	unk3[40];	/* no more in header len 0x190	*/
+    unsigned int uuid[4]; /*UUID of this VDI*/
+    unsigned int uusnap[4];                      /*UUID of last snap*/
+    unsigned int uulink[4];/*UUID link*/
+     unsigned  int uupar[4];/*UUID parent*/
+
+    /*456*/ unsigned int garbage[14];	/* no more in header len 0x190	*/
     /*512*/
-  } VDI;
+  } ;
+#endif
