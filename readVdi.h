@@ -2,6 +2,7 @@
 #define READVDI
 #include "vdifile.h"
 #include "vdi.h"
+#include "mbr.h"
 #include <cstdint>
 #include <string>
 #include <iostream>
@@ -24,7 +25,7 @@ void vdiFileClose(VDIFile *v){
   ssize_t read(VDIFile *v,void *buff,ssize_t num){
     ssize_t nBytes= read(v->file,buff,num);
     if (num != nBytes){
-      printf("Error");
+      cout <<"Error";
       return 1;
           }
           return 0;
@@ -35,5 +36,11 @@ void vdiFileClose(VDIFile *v){
 
     int map= read(v->file,headerMap,4*(v->header.blocks));
     return 0;
+  }
+
+  int readMBR(VDIFile *f, BootRecord&  b){
+      off_t offset= lseek(f->file,f->header.blockdata,SEEK_SET);
+    int mbr = read(f->file,&b,sizeof(b));
+    return mbr;
   }
 #endif

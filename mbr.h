@@ -1,14 +1,19 @@
 #ifndef MBR
 #define MBR
 struct  partitionTable{
-char unused[8];
-int abssector;
-int numsector;
-}
-struct diskpart{
-char trash[446];
-partitionTable Partition[4];
-char buffer[2];
 
-}
-#endif MBR
+unsigned char unused[8];
+unsigned int abssector;
+unsigned int numsector;
+
+};
+
+struct BootRecord{
+
+unsigned char trash[0x1be];
+partitionTable Partition[4];
+unsigned char buffer[2];
+
+};
+
+#endif
