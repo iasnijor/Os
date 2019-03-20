@@ -3,6 +3,7 @@
 #include "vdifile.h"
 #include "vdi.h"
 #include "mbr.h"
+#include "superBlock.h"
 #include <cstdint>
 #include <string>
 #include <iostream>
@@ -41,6 +42,14 @@ void vdiFileClose(VDIFile *v){
   int readMBR(VDIFile *f, BootRecord&  b){
       off_t offset= lseek(f->file,f->header.blockdata,SEEK_SET);
     int mbr = read(f->file,&b,sizeof(b));
+
     return mbr;
+  }
+  int readSuperblock(VDIFile *f, Superblock& s,int loc){
+
+   off_t offset= lseek(f->file,loc,SEEK_SET);
+    int super= read(f->file,&s, sizeof(s));
+
+
   }
 #endif

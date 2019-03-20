@@ -2,6 +2,7 @@
 #include "vdifile.h"
 #include "readVdi.h"
 #include "mbr.h"
+#include "superBlock.h"
 
 #include <iostream>
 
@@ -25,7 +26,12 @@ cout << hex<< d<< endl;
    cout <<f->header.imgsignature<< endl;
 
    int mb= readMBR(f,b);
-   cout << b.Partition[0].abssector<< endl << b.Partition[0].numsector<< endl;
+   Superblock super;
+   int location= b.Partition[0].abssector*512+1024;
+   cout << location<<endl;
+   int s=readSuperblock(f,super, location);
+   cout << b.Partition[0].abssector<< endl << b.Partition[0].numsector<< endl<< super.s_inode_size<< endl;
+   cout <<super.s_inodes_count<<endl << super.s_magic << endl;
 
 
 
