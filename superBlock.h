@@ -1,7 +1,7 @@
 #ifndef SUPERBLOCK
 #define SUPERBLOCK
 
-struct superBlock
+struct __attribute__ ((packed)) Superblock
 {
   unsigned int s_inodes_count;
   unsigned int s_blocks_count;
@@ -28,7 +28,7 @@ struct superBlock
   unsigned int s_rev_level;
   unsigned short s_def_resuid;
   unsigned short s_def_resgid;
-  
+
   unsigned int s_first_ino;
   unsigned short s_inode_size;
   unsigned short s_block_group_nr;
@@ -54,8 +54,8 @@ struct superBlock
   unsigned short s_reserved_word_pad;
   unsigned int s_default_mount_opts;
   unsigned int s_first_meta_bg;
-  unsigned int s_reserved[190]; 
+  unsigned int s_reserved[190];
 
 };
 
-#endif 
+#endif

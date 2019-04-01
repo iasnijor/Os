@@ -1,6 +1,6 @@
 #ifndef MBR
 #define MBR
-struct  partitionTable{
+struct __attribute__ ((packed)) partitionTable{
 
 unsigned char unused[8];
 unsigned int abssector;
@@ -8,12 +8,10 @@ unsigned int numsector;
 
 };
 
-struct BootRecord{
-
-unsigned char trash[0x1be];
+struct __attribute__ ((packed)) BootRecord{
+unsigned char unused[446];
 partitionTable Partition[4];
-unsigned char buffer[2];
-
+unsigned short buffer;
 };
 
 #endif

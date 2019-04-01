@@ -1,38 +1,51 @@
-#include "vdi.h"
-#include "vdifile.h"
-#include "readVdi.h"
-#include "mbr.h"
-#include "superBlock.h"
+    #include "vdi.h"
+    #include "vdifile.h"
+    #include "readVdi.h"
+    #include "mbr.h"
+    #include "superBlock.h"
 
-#include <iostream>
+    #include <iostream>
+    #include <cstdint>
+    #include <string>
+    #include <iostream>
+    #include <stdlib.h>
+    #include <stdio.h>
+    #include <unistd.h>
+    #include <fcntl.h>
 
+     using namespace std;
 
- using namespace std;
+      int main(int  argc,  char* argv[]){
 
-  int main(int  argc,  char* argv[]){
+        int vfile;
+       VDIFile* f =new VDIFile();
+       vfile=vdifileopen(f,argv[1]);
 
-    int vfile;
-   VDIFile* f =new VDIFile();
-   vfile=vdifileopen(f,argv[1]);
-   BootRecord b;
-   ssize_t num;
-   num = read(f,&(f->header),sizeof(f->header));
-   int headerMap[f->header.blocks];
-   int h;
+          off_t offset;
+         offset = VDISeek(f,0,SEEK_SET);
+        int head=VDIread(f,&(f->header), sizeof(f->header));
 
-   h=readHeader(f,headerMap);
-   int d=f->header.imgsignature;
-cout << hex<< d<< endl;
-   cout <<f->header.imgsignature<< endl;
-
-   int mb= readMBR(f,b);
-   Superblock super;
-   int location= b.Partition[0].abssector*512+1024;
-   cout << location<<endl;
-   int s=readSuperblock(f,super, location);
-   cout << b.Partition[0].abssector<< endl << b.Partition[0].numsector<< endl<< super.s_inode_size<< endl;
-   cout <<super.s_inodes_count<<endl << super.s_magic << endl;
+          cout << hex<< "Magic Number:";
+         cout <<f->header.imgsignature <<endl;
 
 
+    /*   int map;
+        int vdiMap[f->header.blocks];
+       map= readMap(f,vdiMap);*/
+         BootRecord b;
 
- }
+
+
+       int mb= readMBR(f,b);
+
+       Superblock super;
+       int finals = b.Partition[0].abssector* 512 + 1024;
+       cout << "loc: "<< finals<< endl;
+       int s=readSuperblock(f, finals, super);
+       cout <<hex<<"abs "<< b.Partition[0].abssector<< endl <<"Num sector "<<  b.Partition[0].numsector<< endl;
+      cout << hex<<super.s_magic<< endl;
+
+
+
+
+     }
