@@ -1,6 +1,6 @@
 #ifndef VDIHEADER
 #define VDIHEADER
- struct vdi
+ struct __attribute__ ((packed)) vdi
   {
 
     /*  0*/ unsigned int	hdr[4];
