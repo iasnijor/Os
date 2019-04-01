@@ -1,7 +1,7 @@
 #ifndef INODE
 #define INODE
 
-struct Inode {
+struct __attribute__ ((packed)) Inode {
 
 	unsigned short i_mode; 		/*	File mode */
 	unsigned short i_uid;		/* low 16 bits of owner Uid */
@@ -17,7 +17,7 @@ struct Inode {
 	union{
 		struct
 		{
-			unsigned int l_i_reserved1;		
+			unsigned int l_i_reserved1;
 		} linux1;
 		struct
 		{
@@ -27,7 +27,7 @@ struct Inode {
 		{
 			unsigned int m_i_reserved1;
 		} masix1;
-	} osd1;	
+	} osd1;
 
 	unsigned int i_block[EXT2_N_BLOACK]; 	/* Pointers to the blocks */
 	unsigned int l_version;					/* The file version	*/
@@ -40,21 +40,21 @@ struct Inode {
 		{
 			unsigned char l_i_frag;			/* Fragment number */
 			unsigned char l_i_fsize;		/* Fragment size */
-			unsigned short i_pad1;			
+			unsigned short i_pad1;
 			unsigned short l_i_uid_high;	/* high 16 bit user id*/
 			unsigned short l_i_gid_high;	/* high 16 bit of group id */
 			unsigned int l_i_reversed2;
 		} linux2;
-		struct 
+		struct
 		{
 			unsigned char h_i_frag;			/* 8 bit fragment number */
 			unsigned char h_i_fsize;		/*  8 bit fragment size */
-			unsigned short h_i_mode_high;	
+			unsigned short h_i_mode_high;
 			unsigned short h_i_uid_high;
 			unsigned short h_i_gid_high;
 			unsigned int h_i_author;
 		}	hurd2;
-		struct 
+		struct
 		{
 			unsigned char m_i_frag;
 			unsigned char m_i_fsize;
