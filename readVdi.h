@@ -36,7 +36,7 @@ using namespace std;
       return 1;
     }
     return nBytes;
-    v->cursor= v->header.offsetdata;
+
   }
   /*  int readMap(VDIFile *v, int headerMap[]){
   off_t offset= lseek (v->file,v->header.offsetblock, SEEK_END);
@@ -60,5 +60,11 @@ using namespace std;
     int super= read(f->file,&s, sizeof(s));
     if(super==1024)
     cout <<"no" << endl;
+  }
+
+  int fetch_block(VDIFile *f,int blockNum,void *buff ){
+    int loc=blockNum +f-> header.offsetdata;
+    off_t offset = lseek (f->file,loc,SEEK_SET);
+    int block = read(f->file,buff,sizeof(buff));
   }
 #endif
