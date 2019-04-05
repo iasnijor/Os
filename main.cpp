@@ -38,9 +38,9 @@
        int mb= readMBR(f,b);
 
        Superblock super;
-       int finals = b.Partition[0].abssector* 512 + 1024;
-       cout << "loc: "<< finals<< endl;
-       int s=readSuperblock(f, finals, super);
+       int superblock_loc = b.Partition[0].abssector* 512 + 1024;
+       cout <<dec << "loc: "<< superblock_loc<< endl;
+       int s=readSuperblock(f, superblock_loc, super);
        cout <<hex<<"abs "<< b.Partition[0].abssector<< endl <<"Num sector " <<  b.Partition[0].numsector<< endl;
       cout << hex<<super.s_magic<< endl;
 
@@ -59,17 +59,20 @@
 
       unsigned int blockSize = 1024 << super.s_log_block_size;
 
-      cout << blockSize + 1024 << endl;
+      cout <<dec << "Block size :" << blockSize + 1024 << endl;
+
       cout << sizeof(group_descriptor) * groupCount << endl;
 
       group_descriptor groupDescriptor[groupCount];
-      int gb = readGroupDescriptor(f, blockSize, groupDescriptor, groupCount);
+      int groupdes_loc = superblock_loc+1024;
+      cout << dec << "group des :"<< groupdes_loc<< endl;
+      int gb = readGroupDescriptor(f,groupdes_loc, groupDescriptor, groupCount);
 
 
 
       cout << groupDescriptor[0].block_bitmap<< endl;
       cout << groupDescriptor[0].inode_bitmap << endl;
-      cout << groupDescriptor[0].used_dirs_count << endl;
+      cout << groupDescriptor[0].inode_table << endl;
 
 
 

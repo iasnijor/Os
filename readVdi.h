@@ -63,7 +63,7 @@ using namespace std;
   }
 
   int readGroupDescriptor(VDIFile *f,  unsigned int blockSize, group_descriptor groupDescriptor[], unsigned int groupCount){
-      lseek(f->file,1024 + blockSize,SEEK_SET);
+      lseek(f->file,f->header.offsetdata+blockSize,SEEK_SET);
       read(f->file,groupDescriptor, sizeof(group_descriptor) * groupCount);
 
       // unsigned int location = 1024 + blockSize;
