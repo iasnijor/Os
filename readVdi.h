@@ -58,8 +58,7 @@ using namespace std;
     off_t offset= lseek(f->file,f->header.offsetdata+loc,SEEK_SET);
     if (offset<0) cout << "Error"<< endl;
     int super= read(f->file,&s, sizeof(s));
-    if(super==1024)
-    cout <<"no" << endl;
+    
   }
 
   int readGroupDescriptor(VDIFile *f,  unsigned int blockSize, group_descriptor groupDescriptor[], unsigned int groupCount){
