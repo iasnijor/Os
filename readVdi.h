@@ -4,6 +4,7 @@
 #include "vdi.h"
 #include "mbr.h"
 #include "superBlock.h"
+#include "groupDescriptor.h"
 #include <cstdint>
 #include <string>
 #include <iostream>
@@ -44,7 +45,6 @@ using namespace std;
   int map= read(v->file,headerMap,4*(v->header.blocks));
   cout << dec << "vdi" << map<< endl;
   return 0;
-
   }*/
 
   int readMBR(VDIFile *f, BootRecord&  b){
@@ -61,4 +61,19 @@ using namespace std;
     if(super==1024)
     cout <<"no" << endl;
   }
+
+  int readGroupDescriptor(VDIFile *f,  unsigned int blockSize, group_descriptor groupDescriptor[], unsigned int groupCount){
+      lseek(f->file,1024 + blockSize,SEEK_SET);
+      read(f->file,groupDescriptor, sizeof(group_descriptor) * groupCount);
+
+      // unsigned int location = 1024 + blockSize;
+      // off_t offset = lseek(f->file,location,SEEK_SET);
+      // cout<< "offset: " << offset <<endl;
+      // if(offset < 0) cout << "can not seek" << endl;
+      //
+      // int descriptor = read(f->file, groupDescriptor, sizeof(group_descriptor) * blockGroupCount);
+      // cout << "read: " << descriptor << endl;
+      // if(descriptor != sizeof(group_descriptor) * blockGroupCount) cout << "can not read" << endl;
+
+    }
 #endif

@@ -3,7 +3,6 @@
     #include "readVdi.h"
     #include "mbr.h"
     #include "superBlock.h"
-
     #include <iostream>
     #include <cstdint>
     #include <string>
@@ -42,9 +41,35 @@
        int finals = b.Partition[0].abssector* 512 + 1024;
        cout << "loc: "<< finals<< endl;
        int s=readSuperblock(f, finals, super);
-       cout <<hex<<"abs "<< b.Partition[0].abssector<< endl <<"Num sector "<<  b.Partition[0].numsector<< endl;
+       cout <<hex<<"abs "<< b.Partition[0].abssector<< endl <<"Num sector " <<  b.Partition[0].numsector<< endl;
       cout << hex<<super.s_magic<< endl;
 
+
+      unsigned int groupCount = (super.s_blocks_count - super.s_first_data_block) / super.s_blocks_per_group;
+
+
+
+      unsigned int remainder = (super.s_blocks_count - super.s_first_data_block) % super.s_blocks_per_group;
+
+      if(remainder > 0){
+        groupCount++;
+      }
+
+      cout << "group count: "<< groupCount << endl;
+
+      unsigned int blockSize = 1024 << super.s_log_block_size;
+
+      cout << blockSize + 1024 << endl;
+      cout << sizeof(group_descriptor) * groupCount << endl;
+
+      group_descriptor groupDescriptor[groupCount];
+      int gb = readGroupDescriptor(f, blockSize, groupDescriptor, groupCount);
+
+
+
+      cout << groupDescriptor[0].block_bitmap<< endl;
+      cout << groupDescriptor[0].inode_bitmap << endl;
+      cout << groupDescriptor[0].used_dirs_count << endl;
 
 
 
