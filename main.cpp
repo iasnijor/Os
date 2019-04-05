@@ -54,8 +54,8 @@ int main(int  argc,  char* argv[]){
         int groupdes_loc = superblock_loc+1024;
         int gb = readGroupDescriptor(f,groupdes_loc, groupDescriptor, groupCount);
         cout <<dec << groupDescriptor[0].block_bitmap<< endl;
-        cout << groupDescriptor[0].inode_bitmap << endl;
-        cout << groupDescriptor[0].inode_table << endl;
+        cout << dec << groupDescriptor[0].inode_bitmap << endl;
+        cout << dec<< groupDescriptor[0].inode_table << endl;
 
 
 
