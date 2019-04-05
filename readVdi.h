@@ -4,6 +4,7 @@
 #include "vdi.h"
 #include "mbr.h"
 #include "superBlock.h"
+#include "groupDescriptor.h"
 #include <cstdint>
 #include <string>
 #include <iostream>
@@ -44,7 +45,6 @@ using namespace std;
   int map= read(v->file,headerMap,4*(v->header.blocks));
   cout << dec << "vdi" << map<< endl;
   return 0;
-
   }*/
 
   int readMBR(VDIFile *f, BootRecord&  b){
