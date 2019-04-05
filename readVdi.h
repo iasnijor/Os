@@ -37,7 +37,7 @@ using namespace std;
       return 1;
     }
     return nBytes;
-
+    v->cursor= v->header.offsetdata;
   }
   /*  int readMap(VDIFile *v, int headerMap[]){
   off_t offset= lseek (v->file,v->header.offsetblock, SEEK_END);
@@ -62,9 +62,18 @@ using namespace std;
     cout <<"no" << endl;
   }
 
-  int fetch_block(VDIFile *f,int blockNum,void *buff ){
-    int loc=blockNum +f-> header.offsetdata;
-    off_t offset = lseek (f->file,loc,SEEK_SET);
-    int block = read(f->file,buff,sizeof(buff));
-  }
+  int readGroupDescriptor(VDIFile *f,  unsigned int blockSize, group_descriptor groupDescriptor[], unsigned int groupCount){
+      lseek(f->file,1024 + blockSize,SEEK_SET);
+      read(f->file,groupDescriptor, sizeof(group_descriptor) * groupCount);
+
+      // unsigned int location = 1024 + blockSize;
+      // off_t offset = lseek(f->file,location,SEEK_SET);
+      // cout<< "offset: " << offset <<endl;
+      // if(offset < 0) cout << "can not seek" << endl;
+      //
+      // int descriptor = read(f->file, groupDescriptor, sizeof(group_descriptor) * blockGroupCount);
+      // cout << "read: " << descriptor << endl;
+      // if(descriptor != sizeof(group_descriptor) * blockGroupCount) cout << "can not read" << endl;
+
+    }
 #endif
