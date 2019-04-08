@@ -58,21 +58,32 @@ using namespace std;
     off_t offset= lseek(f->file,f->header.offsetdata+loc,SEEK_SET);
     if (offset<0) cout << "Error"<< endl;
     int super= read(f->file,&s, sizeof(s));
-    
+
   }
 
   int readGroupDescriptor(VDIFile *f,  unsigned int blockSize, group_descriptor groupDescriptor[], unsigned int groupCount){
       lseek(f->file,f->header.offsetdata+blockSize,SEEK_SET);
       read(f->file,groupDescriptor, sizeof(group_descriptor) * groupCount);
 
-      // unsigned int location = 1024 + blockSize;
-      // off_t offset = lseek(f->file,location,SEEK_SET);
-      // cout<< "offset: " << offset <<endl;
-      // if(offset < 0) cout << "can not seek" << endl;
-      //
-      // int descriptor = read(f->file, groupDescriptor, sizeof(group_descriptor) * blockGroupCount);
-      // cout << "read: " << descriptor << endl;
-      // if(descriptor != sizeof(group_descriptor) * blockGroupCount) cout << "can not read" << endl;
 
     }
+
+
+  int fetchBlock(VDIFile *f, unsigned int blockNum, unsigned char *buff, int location, unsigned int blockSize){
+    int num = (blockNum * blockSize) + location;
+    lseek(f->file, num , SEEK_SET);
+    read(f->file, buff, blockSize);
+  }
+
+  // int fetchBlock(VDIFile *f,  group_descriptor groupDescriptor[], unsigned int blockSize){
+  //   unsigned char *bitmap;
+  //   bitmap = (unsigned char *)malloc(blockSize);
+  //    lseek(f->file, groupDescriptor[0].block_bitmap, SEEK_SET);
+  //    read(f->file, bitmap, blockSize);
+  //
+  //    free(bitmap);
+  //
+  // }
+
+
 #endif

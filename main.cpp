@@ -51,11 +51,18 @@ int main(int  argc,  char* argv[]){
         cout << "Group count: "<< groupCount << endl;
         unsigned int blockSize = 1024 << super.s_log_block_size;
         group_descriptor groupDescriptor[groupCount];
-        int groupdes_loc = superblock_loc+blockSize;
+        int groupdes_loc = superblock_loc+1024;
         int gb = readGroupDescriptor(f,groupdes_loc, groupDescriptor, groupCount);
-        cout <<dec << groupDescriptor[0].block_bitmap<< endl;
-        cout << dec << groupDescriptor[0].inode_bitmap << endl;
-        cout << dec<< groupDescriptor[0].inode_table << endl;
+        cout << dec << groupDescriptor[0].block_bitmap<< endl;
+        cout << groupDescriptor[0].inode_bitmap << endl;
+        cout << groupDescriptor[0].inode_table << endl;
+
+
+        unsigned char* buf = (unsigned char*)malloc(blockSize);
+
+        int fBlock = fetchBlock(f, 259, buf,superblock_loc,blockSize);
+
+        cout << fBlock << endl;
 
 
 
