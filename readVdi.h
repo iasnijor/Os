@@ -69,13 +69,28 @@ using namespace std;
     }
 
 
-  unsigned char* fetchBlock(VDIFile *f, unsigned int blockNum, unsigned char *buff, int location, unsigned int blockSize){
+  unsigned char* fetchBlock(VDIFile *f, unsigned int blockNum, int location, unsigned int blockSize){
+
+    unsigned char* buff = (unsigned char*)malloc(blockSize);
+
     int num = (blockNum * blockSize) + f->header.offsetdata+location;
     off_t offset=lseek(f->file, num , SEEK_SET);
     int block=read(f->file, buff, blockSize);
     return buff;
   }
 
+  // int fetchBlockFromFile(Inode inode, unsigned int blockNum, unsigned char *tmp){
+  //   unsigned int ipb = blockSize/4;
+  //   if(blockNum < 12){
+  //     list = blockNum;
+  //     goto direct;
+  //   }
+  //   if(blockNum < ipb * ipb){
+  //     list = blockNum + 1;
+  //     goto double;
+  //   }
+  //   else
+  // }
   // int fetchBlock(VDIFile *f,  group_descriptor groupDescriptor[], unsigned int blockSize){
   //   unsigned char *bitmap;
   //   bitmap = (unsigned char *)malloc(blockSize);
