@@ -60,7 +60,7 @@ int main(int  argc,  char* argv[]){
 
         unsigned char* buf = (unsigned char*)malloc(blockSize);
 
-        int fBlock = fetchBlock(f, 259, buf,superblock_loc,blockSize);
+        unsigned char* fBlock = fetchBlock(f, 259, buf,superblock_loc-1024,blockSize);
 
         cout << fBlock << endl;
 

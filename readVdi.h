@@ -69,10 +69,11 @@ using namespace std;
     }
 
 
-  int fetchBlock(VDIFile *f, unsigned int blockNum, unsigned char *buff, int location, unsigned int blockSize){
-    int num = (blockNum * blockSize) + location;
-    lseek(f->file, num , SEEK_SET);
-    read(f->file, buff, blockSize);
+  unsigned char* fetchBlock(VDIFile *f, unsigned int blockNum, unsigned char *buff, int location, unsigned int blockSize){
+    int num = (blockNum * blockSize) + f->header.offsetdata+location;
+    off_t offset=lseek(f->file, num , SEEK_SET);
+    int block=read(f->file, buff, blockSize);
+    return buff;
   }
 
   // int fetchBlock(VDIFile *f,  group_descriptor groupDescriptor[], unsigned int blockSize){
