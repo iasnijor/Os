@@ -67,11 +67,12 @@ int main(int  argc,  char* argv[]){
 
 
         uint8_t* fBlock = fetchBlock(f, 259,buf,filesystemstart,blockSize);
-
-        cout << *fBlock << endl;
-        Inode i= fetchInode(f,2,super,groupDescriptor,blockSize);
-        unsigned char *check=fetchBlock(f, i.i_block[0],buf,filesystemstart,blockSize);
-
+        //cout <<dec<< "file star"<<filesystemstart << endl;
+        cout <<uint8_t(*fBlock+3) << endl <<uint8_t(*fBlock+4)<< endl <<uint8_t(*fBlock+5) << endl;
+        Inode i= fetchInode(f,2,super,groupDescriptor,blockSize,filesystemstart);
+          uint8_t* buf2 = new uint8_t[blockSize];
+        unsigned char *check=fetchBlock(f, i.i_block[0],buf2,filesystemstart,blockSize);
+        cout <<uint8_t(*check+1) << endl;
         // calculate total filesystem size
         unsigned int fsSize = super.s_blocks_count * blockSize;
         printf("Total size of Filesystem: %u bytes\n", fsSize);

@@ -107,6 +107,7 @@ off_t location;
       //uint8_t* buff = new uint8_t[blockSize];
 
       int num = (blockNum * blockSize) + f->header.offsetdata+location;
+      cout << "Num"<< num << endl;
       off_t offset=lseek(f->file, num , SEEK_SET);
       int block=read(f->file, buff, blockSize);
 
@@ -115,7 +116,7 @@ off_t location;
 
     }
 
-   Inode fetchInode(VDIFile *f,int inodeNumber,Superblock super, group_descriptor group[],unsigned int blockSize){
+   Inode fetchInode(VDIFile *f,int inodeNumber,Superblock super, group_descriptor group[],unsigned int blockSize,int filesystemstart){
    Inode inode;
    //uint8_t* buff = (uint8_t*)malloc(blockSize);
    uint8_t* buff = new uint8_t[blockSize];
@@ -126,7 +127,7 @@ off_t location;
    unsigned int inodesPerBlock  = blockSize/sizeof(Inode);
    unsigned int blockNum           = inodeNumber/inodesPerBlock;
    unsigned int inodeGroupNumber= inodeNumber% inodesPerBlock;
-   fetchBlock(f,blockNum,buff,group[blockgroup].inode_table+blockNum,blockSize);
+   fetchBlock(f,group[blockgroup].inode_table+blockNum,buff,filesystemstart+inodeGroupNumber*sizeof(Inode),blockSize);
    Inode  *ibuff =(Inode *)malloc(blockSize);
    ibuff=(Inode*) &buff;
    return ibuff[inodeGroupNumber];
