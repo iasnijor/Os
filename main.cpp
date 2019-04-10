@@ -24,6 +24,8 @@ int main(int  argc,  char* argv[]){
         off_t offset;
         offset = VDISeek(f,0,SEEK_SET);
         int head=VDIread(f,&(f->header), sizeof(f->header));
+
+        // debug code to make sure we getting the header magic number right
         cout << hex<< "Header Magic Number:"<<f->header.imgsignature <<endl;
 
 
@@ -41,6 +43,7 @@ int main(int  argc,  char* argv[]){
         int superblock_loc = b.Partition[0].abssector* 512 + 1024;
         int filesystemstart=superblock_loc-1024;
         int s=readSuperblock(f, superblock_loc, super);
+        // Debug code to make sure we are reading the superBlock
         cout <<hex<<"Absolute Sector Number "<< b.Partition[0].abssector<< endl <<"Number sector " <<  b.Partition[0].numsector<< endl;
         cout << hex<<"Superblock Magic Number: "<<super.s_magic<< endl;
 
@@ -61,12 +64,11 @@ int main(int  argc,  char* argv[]){
         cout << groupDescriptor[0].inode_table << endl;
 
 
-        unsigned char* buf = (unsigned char*)malloc(blockSize);
 
         unsigned char* fBlock = fetchBlock(f, 259, buf,filesystemstart,blockSize);
 
         cout << *fBlock << endl;
         Inode i= fetchInode(f,2,super,groupDescriptor,blockSize);
         unsigned char *check=fetchBlock(f, i.i_block[0],buf,filesystemstart,blockSize);
-        
+
 }
