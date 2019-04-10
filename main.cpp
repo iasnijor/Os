@@ -37,7 +37,9 @@ int main(int  argc,  char* argv[]){
 
         // Reading Superblock
         Superblock super;
+
         int superblock_loc = b.Partition[0].abssector* 512 + 1024;
+        int filesystemstart=superblock_loc-1024;
         int s=readSuperblock(f, superblock_loc, super);
         cout <<hex<<"Absolute Sector Number "<< b.Partition[0].abssector<< endl <<"Number sector " <<  b.Partition[0].numsector<< endl;
         cout << hex<<"Superblock Magic Number: "<<super.s_magic<< endl;
@@ -52,6 +54,7 @@ int main(int  argc,  char* argv[]){
         unsigned int blockSize = 1024 << super.s_log_block_size;
         group_descriptor groupDescriptor[groupCount];
         int groupdes_loc = superblock_loc+1024;
+
         int gb = readGroupDescriptor(f,groupdes_loc, groupDescriptor, groupCount);
         cout << dec << groupDescriptor[0].block_bitmap<< endl;
         cout << groupDescriptor[0].inode_bitmap << endl;
@@ -60,10 +63,10 @@ int main(int  argc,  char* argv[]){
 
         unsigned char* buf = (unsigned char*)malloc(blockSize);
 
-        unsigned char* fBlock = fetchBlock(f, 259, buf,superblock_loc-1024,blockSize);
+        unsigned char* fBlock = fetchBlock(f, 259, buf,filesystemstart,blockSize);
 
-        cout << fBlock << endl;
-
-
-
+        cout << *fBlock << endl;
+        Inode i= fetchInode(f,2,super,groupDescriptor,blockSize);
+        unsigned char *check=fetchBlock(f, i.i_block[0],buf,filesystemstart,blockSize);
+        
 }

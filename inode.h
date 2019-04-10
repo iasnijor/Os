@@ -29,7 +29,7 @@ struct __attribute__ ((packed)) Inode {
 		} masix1;
 	} osd1;
 
-	unsigned int i_block[EXT2_N_BLOACK]; 	/* Pointers to the blocks */
+	unsigned int i_block[15]; 	/* Pointers to the blocks */
 	unsigned int l_version;					/* The file version	*/
 	unsigned int i_file_acl;				/* File ACL */
 	unsigned int i_dir_acl;					/* Directory ACL */

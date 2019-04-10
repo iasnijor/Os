@@ -5,6 +5,7 @@
 #include "mbr.h"
 #include "superBlock.h"
 #include "groupDescriptor.h"
+#include "inode.h"
 #include <cstdint>
 #include <string>
 #include <iostream>
@@ -25,9 +26,41 @@ using namespace std;
     close(v->file);
   }
 
-  int VDISeek (VDIFile* v, off_t off, int s){
-    int loc= lseek(v->file,off,s);
-    return loc;
+  off_t VDISeek (VDIFile* f, off_t off, int whence){
+off_t location;
+        if (whence == SEEK_SET)
+	{
+		location = lseek(f->file, off, whence);
+		if (location < 0)
+		{
+			cout << "Error seeking the vdi header" << endl;
+			return 1;
+		}
+		f->cursor = location;
+	}
+	if (whence == SEEK_CUR)
+	{
+		location = lseek(f->file, off, whence);
+		if (location < 0)
+		{
+			cout << "Error seeking the vdi header" << endl;
+			return 1;
+		}
+		f->cursor += off;
+	}
+	if (whence == SEEK_END)
+	{
+		location = lseek(f->file, off, whence);
+		if (location < 0)
+		{
+			cout << "Error seeking the vdi header" << endl;
+			return 1;
+		}
+		f->cursor = off + f->filesize;
+	}
+	return f->cursor;
+
+
   }
 
   ssize_t VDIread(VDIFile *v,void *buff,ssize_t num){
@@ -48,16 +81,16 @@ using namespace std;
   }*/
 
   int readMBR(VDIFile *f, BootRecord&  b){
-    off_t offset= lseek(f->file,f->header.offsetdata,SEEK_SET);
+    off_t offset= VDISeek(f,f->header.offsetdata,SEEK_SET);
     if (offset< 0) cout << "Error"<<endl;
-    int mbr = read(f->file,&b,sizeof(b));
+    int mbr = VDIread(f,&b,sizeof(b));
     return mbr;
   }
 
   int readSuperblock(VDIFile *f,int loc, Superblock& s){
-    off_t offset= lseek(f->file,f->header.offsetdata+loc,SEEK_SET);
+    off_t offset= VDISeek(f,f->header.offsetdata+loc,SEEK_SET);
     if (offset<0) cout << "Error"<< endl;
-    int super= read(f->file,&s, sizeof(s));
+    int super= VDIread(f,&s, sizeof(s));
 
   }
 
@@ -76,15 +109,22 @@ using namespace std;
     return buff;
   }
 
-  // int fetchBlock(VDIFile *f,  group_descriptor groupDescriptor[], unsigned int blockSize){
-  //   unsigned char *bitmap;
-  //   bitmap = (unsigned char *)malloc(blockSize);
-  //    lseek(f->file, groupDescriptor[0].block_bitmap, SEEK_SET);
-  //    read(f->file, bitmap, blockSize);
-  //
-  //    free(bitmap);
-  //
-  // }
+   Inode fetchInode(VDIFile *f,int inodeNumber,Superblock super, group_descriptor group[],unsigned int blockSize){
+   Inode inode;
+   unsigned char* buff = (unsigned char*)malloc(blockSize);
+   inodeNumber--;
+   unsigned int blockgroup      = inodeNumber/super.s_inodes_per_group;
+   unsigned int blockGroupNum   = inodeNumber % super.s_inodes_per_group;
+   unsigned int inodesPerBlock  = blockSize/sizeof(Inode);
+   unsigned int blockNum           = inodeNumber/inodesPerBlock;
+   unsigned int inodeGroupNumber= inodeNumber% inodesPerBlock;
+   fetchBlock(f,blockNum,buff,group[blockgroup].inode_table+blockNum,blockSize);
+   Inode  *ibuff =(Inode *)malloc(blockSize);
+   ibuff=(Inode*) &buff;
+   return ibuff[inodeGroupNumber];
+
+ }
+
 
 
 #endif
