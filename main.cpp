@@ -63,12 +63,25 @@ int main(int  argc,  char* argv[]){
         cout << groupDescriptor[0].inode_bitmap << endl;
         cout << groupDescriptor[0].inode_table << endl;
 
-        unsigned char* buf= (unsigned char*)malloc(blockSize);
+        uint8_t* buf = new uint8_t[blockSize];
 
-        unsigned char* fBlock = fetchBlock(f, 259, buf,filesystemstart,blockSize);
+
+        uint8_t* fBlock = fetchBlock(f, 259,buf,filesystemstart,blockSize);
 
         cout << *fBlock << endl;
         Inode i= fetchInode(f,2,super,groupDescriptor,blockSize);
         unsigned char *check=fetchBlock(f, i.i_block[0],buf,filesystemstart,blockSize);
+
+        // calculate total filesystem size
+        unsigned int fsSize = super.s_blocks_count * blockSize;
+        printf("Total size of Filesystem: %u bytes\n", fsSize);
+
+        // calculate free space
+        unsigned int fSpace = super.s_free_blocks_count * blockSize;
+        printf("Size available for files: %u bytes\n", fSpace);
+
+        // calculate used used space
+        unsigned int uSpace = blockSize * (super.s_blocks_count - super.s_free_blocks_count);
+        printf("Used Space: %u bytes\n", uSpace );
 
 }

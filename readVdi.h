@@ -102,19 +102,24 @@ off_t location;
     }
 
 
-  unsigned char* fetchBlock(VDIFile *f, unsigned int blockNum,unsigned char* buff, int location, unsigned int blockSize){
+    uint8_t* fetchBlock(VDIFile *f, unsigned int blockNum, uint8_t* buff, int location, unsigned int blockSize){
 
-  //  unsigned char* buff = (unsigned char*)malloc(blockSize);
+      //uint8_t* buff = new uint8_t[blockSize];
 
-    int num = (blockNum * blockSize) + f->header.offsetdata+location;
-    off_t offset=lseek(f->file, num , SEEK_SET);
-    int block=read(f->file, buff, blockSize);
-    return buff;
-  }
+      int num = (blockNum * blockSize) + f->header.offsetdata+location;
+      off_t offset=lseek(f->file, num , SEEK_SET);
+      int block=read(f->file, buff, blockSize);
+
+      return buff;
+
+
+    }
 
    Inode fetchInode(VDIFile *f,int inodeNumber,Superblock super, group_descriptor group[],unsigned int blockSize){
    Inode inode;
-   unsigned char* buff = (unsigned char*)malloc(blockSize);
+   //uint8_t* buff = (uint8_t*)malloc(blockSize);
+   uint8_t* buff = new uint8_t[blockSize];
+
    inodeNumber--;
    unsigned int blockgroup      = inodeNumber/super.s_inodes_per_group;
    unsigned int blockGroupNum   = inodeNumber % super.s_inodes_per_group;
