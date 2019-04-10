@@ -63,7 +63,7 @@ int main(int  argc,  char* argv[]){
         cout << groupDescriptor[0].inode_bitmap << endl;
         cout << groupDescriptor[0].inode_table << endl;
 
-
+        unsigned char* buf= (unsigned char*)malloc(blockSize);
 
         unsigned char* fBlock = fetchBlock(f, 259, buf,filesystemstart,blockSize);
 
