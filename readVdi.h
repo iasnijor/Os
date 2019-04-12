@@ -63,6 +63,13 @@ off_t location;
 
   }
 
+
+  // int vdiMapRead(VDIFile* f, unsigned int vdiMap[]){
+  //   off_t offset = lseek(f->file, f-> header.offsetblock, SEEK_SET);
+  //   int read = read(f->file, vdiMap, 4 * (f->header.blocks));
+  // }
+
+
   ssize_t VDIread(VDIFile *v,void *buff,ssize_t num){
     ssize_t nBytes= read(v->file,buff,num);
     if (num != nBytes){
@@ -72,13 +79,8 @@ off_t location;
     return nBytes;
     v->cursor= v->header.offsetdata;
   }
-  /*  int readMap(VDIFile *v, int headerMap[]){
-  off_t offset= lseek (v->file,v->header.offsetblock, SEEK_END);
-  cout << dec<<v->header.offsetblock<< endl;
-  int map= read(v->file,headerMap,4*(v->header.blocks));
-  cout << dec << "vdi" << map<< endl;
-  return 0;
-  }*/
+
+
 
   int readMBR(VDIFile *f, BootRecord&  b){
     off_t offset= VDISeek(f,f->header.offsetdata,SEEK_SET);
@@ -135,6 +137,43 @@ off_t location;
   return ibuff[inodeNumber];
 
  }
+
+ void printSuperBlock(Superblock &super){
+    printf("\nSuperblock from block group %i\n", super.s_block_group_nr);
+    printf("Inodes count:          %15u\n"
+           "Blocks count:          %15u\n"
+           "Reserved blocks count: %15u\n"
+           "Free blocks count:     %15u\n"
+           "Free inodes count:     %15u\n"
+           "State:                 %15u\n"
+           "Block per group:       %15u\n"
+           "Magic number:          %15x\n\n",
+           super.s_inodes_count,
+           super.s_blocks_count,
+           super.s_r_blocks_count,
+           super.s_free_blocks_count,
+           super.s_free_inodes_count,
+           super.s_state,
+           super.s_blocks_per_group,
+           super.s_magic);
+  }
+
+  void printBGDT(group_descriptor groupDescriptor[], unsigned int totalBlockGroups) {
+    printf("Group    Block     Inode      Inode    Free      Free        Used\n"
+           "         Bitmap    Bitmap     Table    Blocks    Inodes      Dirs\n"
+           "-----------------------------------------------------------------\n");
+    for (int i = 0; i < totalBlockGroups; i++) {
+      printf("%5d %9u %9u %9u %9u %9u %9u\n",
+             i,
+             groupDescriptor[i].block_bitmap,
+             groupDescriptor[i].inode_bitmap,
+             groupDescriptor[i].inode_table,
+             groupDescriptor[i].free_blocks_count,
+             groupDescriptor[i].free_inodes_count,
+             groupDescriptor[i].used_dirs_count);
+    }
+    printf("\n");
+  }
 
 
 

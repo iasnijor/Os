@@ -5,6 +5,7 @@
 #include "superBlock.h"
 #include <iostream>
 #include <cstdint>
+#include <math.h>
 #include <string>
 #include <iostream>
 #include <stdlib.h>
@@ -26,13 +27,10 @@ int main(int  argc,  char* argv[]){
         offset = VDISeek(f,0,SEEK_SET);
         int head=VDIread(f,&(f->header), sizeof(f->header));
 
+
+
         // debug code to make sure we getting the header magic number right
-        cout << hex<< "Header Magic Number:"<<f->header.imgsignature <<endl;
-
-
-        /*   int map;
-        int vdiMap[f->header.blocks];
-        map= readMap(f,vdiMap);*/
+        //cout << hex<< "Header Magic Number:"<<f->header.imgsignature <<endl;
 
         // Reading MBR
         BootRecord b;
@@ -62,9 +60,17 @@ int main(int  argc,  char* argv[]){
         int groupdes_loc = superblock_loc+blockSize;
 
         int gb = readGroupDescriptor(f,groupdes_loc, groupDescriptor, groupCount);
-        cout << dec <<"Block Bitmap "<< groupDescriptor[0].block_bitmap<< endl;
-        cout <<"Inode Bitmap "<< groupDescriptor[0].inode_bitmap << endl;
-        cout <<"Inode Table "<< groupDescriptor[0].inode_table << endl;
+        //cout << dec << groupDescriptor[0].block_bitmap<< endl;
+        //cout << groupDescriptor[0].inode_bitmap << endl;
+        //cout << groupDescriptor[0].inode_table << endl;
+
+        // print super block
+        printSuperBlock(super);
+
+        // print group descriptor table
+        printBGDT(groupDescriptor,groupCount);
+
+
 
         uint8_t* buf = new uint8_t[blockSize];
 
