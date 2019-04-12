@@ -65,8 +65,7 @@ int main(int  argc,  char* argv[]){
         printSuperBlock(super);
 
         // print group descriptor table
-        unsigned int blockGroups = ceil(super.s_blocks_count/ super.s_blocks_per_group);
-        printBGDT(groupDescriptor,blockGroups);
+        printBGDT(groupDescriptor,groupCount);
 
 
 
