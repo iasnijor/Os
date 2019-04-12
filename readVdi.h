@@ -88,14 +88,14 @@ off_t location;
   }
 
   int readSuperblock(VDIFile *f,int loc, Superblock& s){
-    off_t offset= VDISeek(f,f->header.offsetdata+loc,SEEK_SET);
+    off_t offset= VDISeek(f,loc,SEEK_SET);
     if (offset<0) cout << "Error"<< endl;
     int super= VDIread(f,&s, sizeof(s));
 
   }
 
   int readGroupDescriptor(VDIFile *f,  unsigned int blockSize, group_descriptor groupDescriptor[], unsigned int groupCount){
-      lseek(f->file,f->header.offsetdata+blockSize,SEEK_SET);
+      lseek(f->file,blockSize,SEEK_SET);
       read(f->file,groupDescriptor, sizeof(group_descriptor) * groupCount);
 
 
@@ -106,10 +106,11 @@ off_t location;
 
       //uint8_t* buff = new uint8_t[blockSize];
 
-      int num = (blockNum * blockSize) + f->header.offsetdata+location;
-      cout << "Num"<< num << endl;
+      int num = (blockNum * blockSize) + location;
+      cout << "Offset "<< num << endl;
       off_t offset=lseek(f->file, num , SEEK_SET);
       int block=read(f->file, buff, blockSize);
+      cout << "Block "<<dec<< block << endl;
 
       return buff;
 
@@ -119,18 +120,19 @@ off_t location;
    Inode fetchInode(VDIFile *f,int inodeNumber,Superblock super, group_descriptor group[],unsigned int blockSize,int filesystemstart){
    Inode inode;
    //uint8_t* buff = (uint8_t*)malloc(blockSize);
-   uint8_t* buff = new uint8_t[blockSize];
 
+   Inode* ibuff = new Inode[blockSize];
    inodeNumber--;
    unsigned int blockgroup      = inodeNumber/super.s_inodes_per_group;
    unsigned int blockGroupNum   = inodeNumber % super.s_inodes_per_group;
    unsigned int inodesPerBlock  = blockSize/sizeof(Inode);
-   unsigned int blockNum           = inodeNumber/inodesPerBlock;
-   unsigned int inodeGroupNumber= inodeNumber% inodesPerBlock;
-   fetchBlock(f,group[blockgroup].inode_table+blockNum,buff,filesystemstart+inodeGroupNumber*sizeof(Inode),blockSize);
-   Inode  *ibuff =(Inode *)malloc(blockSize);
-   ibuff=(Inode*) &buff;
-   return ibuff[inodeGroupNumber];
+   unsigned int blockNumber     = blockGroupNum/inodesPerBlock;
+   unsigned int inodeGroupNumber= blockGroupNum% inodesPerBlock;
+    cout <<"B " <<blockgroup << " "<< blockGroupNum << " "<< inodesPerBlock<< " " << " " << blockNumber << " "<<  inodeGroupNumber<< endl;
+  int  blockNum =group[blockgroup].inode_table+blockNumber;
+  cout <<"Block "<< blockNum<< endl;
+  fetchBlock(f,blockNum,(uint8_t*)ibuff,filesystemstart,blockSize);
+  return ibuff[inodeNumber];
 
  }
 
