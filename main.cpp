@@ -5,6 +5,7 @@
 #include "superBlock.h"
 #include <iostream>
 #include <cstdint>
+#include <math.h>
 #include <string>
 #include <iostream>
 #include <stdlib.h>
@@ -25,13 +26,10 @@ int main(int  argc,  char* argv[]){
         offset = VDISeek(f,0,SEEK_SET);
         int head=VDIread(f,&(f->header), sizeof(f->header));
 
+
+
         // debug code to make sure we getting the header magic number right
-        cout << hex<< "Header Magic Number:"<<f->header.imgsignature <<endl;
-
-
-        /*   int map;
-        int vdiMap[f->header.blocks];
-        map= readMap(f,vdiMap);*/
+        //cout << hex<< "Header Magic Number:"<<f->header.imgsignature <<endl;
 
         // Reading MBR
         BootRecord b;
@@ -44,8 +42,8 @@ int main(int  argc,  char* argv[]){
         int filesystemstart=superblock_loc-1024;
         int s=readSuperblock(f, superblock_loc, super);
         // Debug code to make sure we are reading the superBlock
-        cout <<hex<<"Absolute Sector Number "<< b.Partition[0].abssector<< endl <<"Number sector " <<  b.Partition[0].numsector<< endl;
-        cout << hex<<"Superblock Magic Number: "<<super.s_magic<< endl;
+        //cout <<hex<<"Absolute Sector Number "<< b.Partition[0].abssector<< endl <<"Number sector " <<  b.Partition[0].numsector<< endl;
+        //cout << hex<<"Superblock Magic Number: "<<super.s_magic<< endl;
 
         //Reading Group Descriptor Table
         unsigned int groupCount = (super.s_blocks_count - super.s_first_data_block) / super.s_blocks_per_group;
@@ -59,20 +57,33 @@ int main(int  argc,  char* argv[]){
         int groupdes_loc = superblock_loc+1024;
 
         int gb = readGroupDescriptor(f,groupdes_loc, groupDescriptor, groupCount);
-        cout << dec << groupDescriptor[0].block_bitmap<< endl;
-        cout << groupDescriptor[0].inode_bitmap << endl;
-        cout << groupDescriptor[0].inode_table << endl;
+        //cout << dec << groupDescriptor[0].block_bitmap<< endl;
+        //cout << groupDescriptor[0].inode_bitmap << endl;
+        //cout << groupDescriptor[0].inode_table << endl;
+
+        // print super block
+        printSuperBlock(super);
+
+        // print group descriptor table
+        unsigned int blockGroups = ceil(super.s_blocks_count/ super.s_blocks_per_group);
+        printBGDT(groupDescriptor,blockGroups);
+
+
 
         uint8_t* buf = new uint8_t[blockSize];
 
 
         uint8_t* fBlock = fetchBlock(f, 259,buf,filesystemstart,blockSize);
+        //cout << "my test: "<<buf[0] << endl;
         //cout <<dec<< "file star"<<filesystemstart << endl;
-        cout <<uint8_t(*fBlock+3) << endl <<uint8_t(*fBlock+4)<< endl <<uint8_t(*fBlock+5) << endl;
+        //cout <<uint8_t(*fBlock+3) << endl <<uint8_t(*fBlock+4)<< endl <<uint8_t(*fBlock+5) << endl;
         Inode i= fetchInode(f,2,super,groupDescriptor,blockSize,filesystemstart);
-          uint8_t* buf2 = new uint8_t[blockSize];
+        uint8_t* buf2 = new uint8_t[blockSize];
         unsigned char *check=fetchBlock(f, i.i_block[0],buf2,filesystemstart,blockSize);
-        cout <<uint8_t(*check+1) << endl;
+        //cout <<uint8_t(*check+1) << endl;
+
+        //cout << "Size of Inode: "<< i.i_size << endl;
+
         // calculate total filesystem size
         unsigned int fsSize = super.s_blocks_count * blockSize;
         printf("Total size of Filesystem: %u bytes\n", fsSize);
