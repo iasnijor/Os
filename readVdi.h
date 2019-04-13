@@ -13,6 +13,8 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include "dir.h"
+#include <string.h>
 using namespace std;
 
   int vdifileopen(VDIFile *v,  char* name){
@@ -137,6 +139,21 @@ off_t location;
   return ibuff[inodeNumber];
 
  }
+/*Inode readInode(VDIFile* f, unsigned int inodeCount,int filesystemstart,unsigned int blockSize,Superblock superBlock, group_descriptor groupDescriptor[]){
+	Inode inode;
+	inodeCount--;
+	unsigned int groupCount = inodeCount / superBlock.s_inodes_per_group;
+	unsigned int offset1 = inodeCount % superBlock.s_inodes_per_group;
+	unsigned int inodesPerBlock = blockSize / sizeof(Inode);
+	unsigned int blockNum = groupDescriptor[groupCount].inode_table + (offset1 / inodesPerBlock);
+	unsigned int offset2 = inodeCount % inodesPerBlock;
+	unsigned int val = (blockNum * blockSize) + (offset2 * sizeof(Inode));
+	unsigned int loc =val;
+	lseek(f->file,val+file, SEEK_SET);
+	read(f->file, &inode, sizeof(Inode));
+	return inode;
+}*/
+
 
  void printSuperBlock(Superblock &super){
     printf("\nSuperblock from block group %i\n", super.s_block_group_nr);
@@ -175,6 +192,64 @@ off_t location;
     printf("\n");
   }
 
+
+  void readDir( int inodeSize, uint8_t *buff){
+      unsigned int cursor=0;
+      dirEntry * entry= new dirEntry[sizeof(dirEntry)];
+      /* first entry in the directory */
+      memcpy(entry,buff,sizeof(*entry));
+      //cout <<"bb"<< entry->rec_len;
+      while(cursor < inodeSize) {
+      char file_name[1];
+      memcpy(file_name, entry->name, entry->name_len);
+      file_name[entry->name_len] = '\0';              /* append null char to the file name */
+      printf("%10u %s\n", entry->inode, file_name);
+      entry  += entry->rec_len;      /* move to the next entry */
+      cursor+= entry->rec_len;
+    }
+    free(entry);
+
+  }
+
+  void fetchBlockfromFile(VDIFile*f,Inode *i, int inodeBlockNum, uint8_t *buff,unsigned int blockSize, int filesystemstart ){
+      unsigned int *list = new unsigned int[15];
+      unsigned int ipb=blockSize/4;
+     if (inodeBlockNum <12){
+       list =i->i_block;
+       goto Direct;
+     }
+     inodeBlockNum-=12;
+     if (inodeBlockNum<ipb){
+       list =i->i_block+12;
+       goto Single;
+     }
+     inodeBlockNum-=ipb;
+     if(inodeBlockNum <ipb*ipb){
+       list=i->i_block+13;
+       goto Double;
+     }
+     inodeBlockNum-=ipb*ipb;
+     list=i->i_block+14;
+     goto Triple;
+     Triple :{
+       fetchBlock(f,list[inodeBlockNum/(ipb*ipb*ipb)],buff,filesystemstart,blockSize);
+       list= ((unsigned *)buff)+ inodeBlockNum/(ipb*ipb);
+     }
+     Double:
+       {
+         fetchBlock(f,list[inodeBlockNum/(ipb*ipb)],buff,filesystemstart,blockSize);
+         list= ((unsigned *)buff)+ inodeBlockNum;
+         inodeBlockNum= inodeBlockNum%(ipb*ipb);
+       }
+       Single :{
+         fetchBlock(f,list[inodeBlockNum/(ipb)],buff,filesystemstart,blockSize);
+         list= ((unsigned *)buff);
+         inodeBlockNum= inodeBlockNum%ipb;
+       }
+       Direct:{
+         fetchBlock(f,list[inodeBlockNum],buff,filesystemstart,blockSize);
+                }
+       }
 
 
 #endif

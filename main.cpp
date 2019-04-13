@@ -42,12 +42,13 @@ int main(int  argc,  char* argv[]){
         int superblock_loc = f->header.offsetdata+b.Partition[0].abssector* 512 + 1024;
         int filesystemstart=superblock_loc-1024;
         int s=readSuperblock(f, superblock_loc, super);
+
         // Debug code to make sure we are reading the superBlock
         cout <<hex<<"Absolute Sector Number "<< b.Partition[0].abssector<< endl <<"Number sector " <<  b.Partition[0].numsector<< endl;
-        cout << hex<<"Superblock Magic Number: "<<super.s_magic<<" " <<"Inodes per group"<<dec<< super.s_inodes_per_group<< endl;
         if (super.s_state==1){cout << "FIle is clean"<< endl;}
         else if (super.s_state==2){cout << "FIle has error"<< endl;}
         else cout << "Error reading Superblock"<< endl;
+
         //Reading Group Descriptor Table
         unsigned int groupCount = (super.s_blocks_count - super.s_first_data_block) / super.s_blocks_per_group;
         unsigned int remainder = (super.s_blocks_count - super.s_first_data_block) % super.s_blocks_per_group;
@@ -58,11 +59,7 @@ int main(int  argc,  char* argv[]){
         unsigned int blockSize = 1024 << super.s_log_block_size;
         group_descriptor groupDescriptor[groupCount];
         int groupdes_loc = superblock_loc+blockSize;
-
         int gb = readGroupDescriptor(f,groupdes_loc, groupDescriptor, groupCount);
-        //cout << dec << groupDescriptor[0].block_bitmap<< endl;
-        //cout << groupDescriptor[0].inode_bitmap << endl;
-        //cout << groupDescriptor[0].inode_table << endl;
 
         // print super block
         printSuperBlock(super);
@@ -73,23 +70,26 @@ int main(int  argc,  char* argv[]){
 
 
         uint8_t* buf = new uint8_t[blockSize];
-
-
         uint8_t* fBlock = fetchBlock(f, 259,buf,filesystemstart,blockSize);
         cout << "fblock "<< unsigned(*fBlock)<< endl;
+
         Inode i= fetchInode(f,2,super,groupDescriptor,blockSize,filesystemstart);
-        cout <<"Inode size "<< sizeof(i) << endl;
-          uint8_t* buf2 = new uint8_t[blockSize];
-          cout <<"Iblock number for Inode 2  " << i.i_block[0]<<" mode "<< i.i_mode <<" "<< i.i_file_acl<< endl;
+      //  Inode i2= readInode(f,2,filesystemstart,blockSize,super,groupDescriptor);
+        cout <<"Inode size "<< sizeof(i) <<" "<<i.i_size <<endl;
+        uint8_t* buf2 = new uint8_t[blockSize];
+        cout <<"Iblock number for Inode 2  " << i.i_block[0]<<" mode "<< i.i_mode <<" "<< i.i_file_acl<< endl;
+        //  cout <<"Iblock number for Inode 2  " << i2.i_block[0]<<" mode "<< i2.i_mode <<" "<< i2.i_file_acl<< endl;
         uint8_t *check=fetchBlock(f, i.i_block[0],buf2,filesystemstart,blockSize);
         cout<< unsigned(*check+1)<<endl;
+        uint8_t* buf3 = new uint8_t[blockSize];
+        fetchBlockfromFile(f,&i,i.i_block[0],buf3,blockSize,filesystemstart);
+    //   readDir(i.i_size,buf3);
         //printing the buffer
        /*for (int i = 0; i < 1024; i++)
         {
           printf("i,%#x\n", check[i]);
 
         }*/
-
 
         // calculate total filesystem size
         unsigned int fsSize = super.s_blocks_count * blockSize;
