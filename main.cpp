@@ -88,13 +88,14 @@ int main(int  argc,  char* argv[]){
         cout <<dec <<"IDD" <<i.i_size<<endl;
         dirEntry *entry=(dirEntry *)buf3;
         cout <<"main entry"<< entry->rec_len<< endl;
-      readDir(i.i_size,buf3);
+        //readDir(i.i_size,buf3);
         //printing the buffer
-   /*for (int i = 0; i < 50; i++)
+   for (int i = 0; i < 1024; i++)
         {
+          cout << (char)buf3[i]<< "    ";
           printf("i,%#x\n", buf3[i]);
 
-        }*/
+        }
 
         // calculate total filesystem size
         unsigned int fsSize = super.s_blocks_count * blockSize;

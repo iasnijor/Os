@@ -194,7 +194,7 @@ off_t location;
       /* first entry in the directory */
       //memcpy(entry,buff,sizeof(*entry));
       cout << "fucntionrec"<<entry->rec_len<<" "<< inodeSize<<  endl;
-      while(cursor < 215 ) {
+      while(cursor < inodeSize ) {
       char file_name[256];
       memcpy(file_name, entry->name, entry->name_len);
       file_name[entry->name_len] = '\0';              // append null char to the file name
@@ -202,7 +202,7 @@ off_t location;
      entry  += entry->rec_len;      // move to the next entry
       cursor+= entry->rec_len;
     }
-  //  free(entry);
+  //  free(entry)
 
   }
 
@@ -227,8 +227,7 @@ off_t location;
      }
      inodeBlockNum-=ipb*ipb;
      list=i->i_block+14;
-     cout << "Here"<< endl;
-     goto Triple;
+      goto Triple;
      Triple :{
        fetchBlock(f,list[inodeBlockNum/(ipb*ipb*ipb)],buff,filesystemstart,blockSize);
        list= ((unsigned *)buff)+ inodeBlockNum/(ipb*ipb);
