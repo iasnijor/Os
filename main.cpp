@@ -3,6 +3,7 @@
 #include "readVdi.h"
 #include "mbr.h"
 #include "superBlock.h"
+#include "dir.h"
 #include <iostream>
 #include <cstdint>
 #include <math.h>
@@ -13,6 +14,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <string>
+#include<sys/stat.h>
 #include <cstdio>
 using namespace std;
 
@@ -71,23 +73,26 @@ int main(int  argc,  char* argv[]){
 
         uint8_t* buf = new uint8_t[blockSize];
         uint8_t* fBlock = fetchBlock(f, 259,buf,filesystemstart,blockSize);
-        cout << "fblock "<< unsigned(*fBlock)<< endl;
 
         Inode i= fetchInode(f,2,super,groupDescriptor,blockSize,filesystemstart);
-      //  Inode i2= readInode(f,2,filesystemstart,blockSize,super,groupDescriptor);
-        cout <<"Inode size "<< sizeof(i) <<" "<<i.i_size <<endl;
+      //  Inode i2= fetchInode(f,4,super,groupDescriptor,blockSize,filesystemstart);
+        cout <<"Inode size "<<dec << sizeof(i) <<" "<<i.i_size <<endl;
         uint8_t* buf2 = new uint8_t[blockSize];
         cout <<"Iblock number for Inode 2  " << i.i_block[0]<<" mode "<< i.i_mode <<" "<< i.i_file_acl<< endl;
-        //  cout <<"Iblock number for Inode 2  " << i2.i_block[0]<<" mode "<< i2.i_mode <<" "<< i2.i_file_acl<< endl;
+      //   cout <<"Iblock number for Inode 2  " << i2.i_block[0]<<" mode "<< i2.i_mode <<" "<< i2.i_file_acl<< endl;
         uint8_t *check=fetchBlock(f, i.i_block[0],buf2,filesystemstart,blockSize);
-        cout<< unsigned(*check+1)<<endl;
+      //  cout<< unsigned(*check+1)<<endl;
+      //  if(S_ISDIR(i.i_mode)){cout<< "yes it is dir"<< endl;}
         uint8_t* buf3 = new uint8_t[blockSize];
-        fetchBlockfromFile(f,&i,i.i_block[0],buf3,blockSize,filesystemstart);
-    //   readDir(i.i_size,buf3);
+       fetchBlockfromFile(f,&i,0,buf3,blockSize,filesystemstart);
+        cout <<dec <<"IDD" <<i.i_size<<endl;
+        dirEntry *entry=(dirEntry *)buf3;
+        cout <<"main entry"<< entry->rec_len<< endl;
+      readDir(i.i_size,buf3);
         //printing the buffer
-       /*for (int i = 0; i < 1024; i++)
+   /*for (int i = 0; i < 50; i++)
         {
-          printf("i,%#x\n", check[i]);
+          printf("i,%#x\n", buf3[i]);
 
         }*/
 

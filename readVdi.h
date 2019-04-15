@@ -99,10 +99,8 @@ off_t location;
   }
 
   int readGroupDescriptor(VDIFile *f,  unsigned int blockSize, group_descriptor groupDescriptor[], unsigned int groupCount){
-      lseek(f->file,blockSize,SEEK_SET);
-      read(f->file,groupDescriptor, sizeof(group_descriptor) * groupCount);
-
-
+      off_t offset=VDISeek(f,blockSize,SEEK_SET);
+      int group=VDIread(f,groupDescriptor, sizeof(group_descriptor) * groupCount);
     }
 
 
@@ -111,11 +109,8 @@ off_t location;
       //uint8_t* buff = new uint8_t[blockSize];
 
       int num = (blockNum * blockSize) + location;
-      cout << "Offset "<< num << endl;
-      off_t offset=lseek(f->file, num , SEEK_SET);
-      int block=read(f->file, buff, blockSize);
-      cout << "Block "<<dec<< block << endl;
-
+      off_t offset=VDISeek(f, num , SEEK_SET);
+      int block=VDIread(f, buff, blockSize);
       return buff;
 
 
@@ -134,7 +129,6 @@ off_t location;
    unsigned int inodeGroupNumber= blockGroupNum% inodesPerBlock;
     cout <<"B " <<blockgroup << " "<< blockGroupNum << " "<< inodesPerBlock<< " " << " " << blockNumber << " "<<  inodeGroupNumber<< endl;
   int  blockNum =group[blockgroup].inode_table+blockNumber;
-  cout <<"Block "<< blockNum<< endl;
   fetchBlock(f,blockNum,(uint8_t*)ibuff,filesystemstart,blockSize);
   return ibuff[inodeNumber];
 
@@ -194,30 +188,33 @@ off_t location;
 
 
   void readDir( int inodeSize, uint8_t *buff){
-      unsigned int cursor=0;
-      dirEntry * entry= new dirEntry[sizeof(dirEntry)];
+      unsigned int cursor=400;
+
+      dirEntry *entry=(dirEntry *)buff+cursor;
       /* first entry in the directory */
-      memcpy(entry,buff,sizeof(*entry));
-      //cout <<"bb"<< entry->rec_len;
-      while(cursor < inodeSize) {
-      char file_name[1];
+      //memcpy(entry,buff,sizeof(*entry));
+      cout << "fucntionrec"<<entry->rec_len<<" "<< inodeSize<<  endl;
+      while(cursor < 215 ) {
+      char file_name[256];
       memcpy(file_name, entry->name, entry->name_len);
-      file_name[entry->name_len] = '\0';              /* append null char to the file name */
-      printf("%10u %s\n", entry->inode, file_name);
-      entry  += entry->rec_len;      /* move to the next entry */
+      file_name[entry->name_len] = '\0';              // append null char to the file name
+      printf("Inode,%10u %s\n", entry->inode, file_name);
+     entry  += entry->rec_len;      // move to the next entry
       cursor+= entry->rec_len;
     }
-    free(entry);
+  //  free(entry);
 
   }
 
   void fetchBlockfromFile(VDIFile*f,Inode *i, int inodeBlockNum, uint8_t *buff,unsigned int blockSize, int filesystemstart ){
       unsigned int *list = new unsigned int[15];
       unsigned int ipb=blockSize/4;
+      cout << "IPB "<<ipb<< " "<<inodeBlockNum<< " " << i->i_block<<endl;
      if (inodeBlockNum <12){
        list =i->i_block;
        goto Direct;
      }
+     cout << "Here"<< endl;
      inodeBlockNum-=12;
      if (inodeBlockNum<ipb){
        list =i->i_block+12;
@@ -230,6 +227,7 @@ off_t location;
      }
      inodeBlockNum-=ipb*ipb;
      list=i->i_block+14;
+     cout << "Here"<< endl;
      goto Triple;
      Triple :{
        fetchBlock(f,list[inodeBlockNum/(ipb*ipb*ipb)],buff,filesystemstart,blockSize);
