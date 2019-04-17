@@ -105,15 +105,10 @@ off_t location;
 
 
     uint8_t* fetchBlock(VDIFile *f, unsigned int blockNum, uint8_t* buff, int location, unsigned int blockSize){
-
-      //uint8_t* buff = new uint8_t[blockSize];
-
       int num = (blockNum * blockSize) + location;
       off_t offset=VDISeek(f, num , SEEK_SET);
       int block=VDIread(f, buff, blockSize);
       return buff;
-
-
     }
 
    Inode fetchInode(VDIFile *f,int inodeNumber,Superblock super, group_descriptor group[],unsigned int blockSize,int filesystemstart){
@@ -126,28 +121,11 @@ off_t location;
    unsigned int blockGroupNum   = inodeNumber % super.s_inodes_per_group;
    unsigned int inodesPerBlock  = blockSize/sizeof(Inode);
    unsigned int blockNumber     = blockGroupNum/inodesPerBlock;
-   unsigned int inodeGroupNumber= blockGroupNum% inodesPerBlock;
-    cout <<"B " <<blockgroup << " "<< blockGroupNum << " "<< inodesPerBlock<< " " << " " << blockNumber << " "<<  inodeGroupNumber<< endl;
-  int  blockNum =group[blockgroup].inode_table+blockNumber;
-  fetchBlock(f,blockNum,(uint8_t*)ibuff,filesystemstart,blockSize);
-  return ibuff[inodeNumber];
-
+    inodeNumber= blockGroupNum% inodesPerBlock;
+   int  blockNum =group[blockgroup].inode_table+blockNumber;
+   fetchBlock(f,blockNum,(uint8_t*)ibuff,filesystemstart,blockSize);
+   return ibuff[inodeNumber];
  }
-/*Inode readInode(VDIFile* f, unsigned int inodeCount,int filesystemstart,unsigned int blockSize,Superblock superBlock, group_descriptor groupDescriptor[]){
-	Inode inode;
-	inodeCount--;
-	unsigned int groupCount = inodeCount / superBlock.s_inodes_per_group;
-	unsigned int offset1 = inodeCount % superBlock.s_inodes_per_group;
-	unsigned int inodesPerBlock = blockSize / sizeof(Inode);
-	unsigned int blockNum = groupDescriptor[groupCount].inode_table + (offset1 / inodesPerBlock);
-	unsigned int offset2 = inodeCount % inodesPerBlock;
-	unsigned int val = (blockNum * blockSize) + (offset2 * sizeof(Inode));
-	unsigned int loc =val;
-	lseek(f->file,val+file, SEEK_SET);
-	read(f->file, &inode, sizeof(Inode));
-	return inode;
-}*/
-
 
  void printSuperBlock(Superblock &super){
     printf("\nSuperblock from block group %i\n", super.s_block_group_nr);
@@ -188,29 +166,37 @@ off_t location;
 
 
   void readDir( int inodeSize, uint8_t *buff){
-      unsigned int cursor=400;
+dirEntry *entry;
+    cout << (dirEntry*)buff<< endl;
+      unsigned int cursor=24;
+      entry=(dirEntry *)(buff+cursor);
+      cout << entry<< endl;
+      int rec=entry->rec_len;
+      cout << "reclength "<<rec <<" "<< entry->name <<endl;
+       entry  += entry->rec_len;
+       cout << "reclength "<<entry->rec_len << " "<<entry->name <<endl;
 
-      dirEntry *entry=(dirEntry *)buff+cursor;
       /* first entry in the directory */
-      //memcpy(entry,buff,sizeof(*entry));
-      cout << "fucntionrec"<<entry->rec_len<<" "<< inodeSize<<  endl;
-      while(cursor < inodeSize ) {
+    //  memcpy(entry,buff,sizeof(*entry));
+    //  cout << "fucntionrec"<<entry->rec_len<<" "<<  endl;
+     while(cursor < inodeSize ) {
       char file_name[256];
       memcpy(file_name, entry->name, entry->name_len);
       file_name[entry->name_len] = '\0';              // append null char to the file name
       printf("Inode,%10u %s\n", entry->inode, file_name);
-     entry  += entry->rec_len;      // move to the next entry
+// entry  += entry->rec_len;      // move to the next entry
+
       cursor+= entry->rec_len;
+      entry=(dirEntry *)(buff+cursor);
     }
   //  free(entry)
 
   }
 
   void fetchBlockfromFile(VDIFile*f,Inode *i, int inodeBlockNum, uint8_t *buff,unsigned int blockSize, int filesystemstart ){
-      unsigned int *list = new unsigned int[15];
-      unsigned int ipb=blockSize/4;
-      cout << "IPB "<<ipb<< " "<<inodeBlockNum<< " " << i->i_block<<endl;
-     if (inodeBlockNum <12){
+      unsigned int *list;
+        unsigned int ipb=blockSize/4;
+       if (inodeBlockNum <12){
        list =i->i_block;
        goto Direct;
      }
@@ -227,16 +213,15 @@ off_t location;
      }
      inodeBlockNum-=ipb*ipb;
      list=i->i_block+14;
-      goto Triple;
-     Triple :{
        fetchBlock(f,list[inodeBlockNum/(ipb*ipb*ipb)],buff,filesystemstart,blockSize);
-       list= ((unsigned *)buff)+ inodeBlockNum/(ipb*ipb);
-     }
+       list= ((unsigned *)buff);
+       inodeBlockNum %= ipb * ipb * ipb;
+
      Double:
        {
          fetchBlock(f,list[inodeBlockNum/(ipb*ipb)],buff,filesystemstart,blockSize);
-         list= ((unsigned *)buff)+ inodeBlockNum;
-         inodeBlockNum= inodeBlockNum%(ipb*ipb);
+         list= ((unsigned *)buff);
+         inodeBlockNum %= ipb * ipb;
        }
        Single :{
          fetchBlock(f,list[inodeBlockNum/(ipb)],buff,filesystemstart,blockSize);

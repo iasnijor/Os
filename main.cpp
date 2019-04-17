@@ -85,17 +85,17 @@ int main(int  argc,  char* argv[]){
       //  if(S_ISDIR(i.i_mode)){cout<< "yes it is dir"<< endl;}
         uint8_t* buf3 = new uint8_t[blockSize];
        fetchBlockfromFile(f,&i,0,buf3,blockSize,filesystemstart);
-        cout <<dec <<"IDD" <<i.i_size<<endl;
+
         dirEntry *entry=(dirEntry *)buf3;
-        cout <<"main entry"<< entry->rec_len<< endl;
-        //readDir(i.i_size,buf3);
-        //printing the buffer
-   for (int i = 0; i < 1024; i++)
+          cout << sizeof(dirEntry)<< "dir entry "<< endl;
+readDir(i.i_size,buf3);
+      //printing the buffer
+/*  for (int i = 0; i < 200; i++)
         {
           cout << (char)buf3[i]<< "    ";
           printf("i,%#x\n", buf3[i]);
 
-        }
+        }*/
 
         // calculate total filesystem size
         unsigned int fsSize = super.s_blocks_count * blockSize;
