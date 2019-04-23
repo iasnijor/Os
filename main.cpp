@@ -70,31 +70,66 @@ int main(int  argc,  char* argv[]){
         printBGDT(groupDescriptor,groupCount);
 
 
-
         uint8_t* buf = new uint8_t[blockSize];
         uint8_t* fBlock = fetchBlock(f, 259,buf,filesystemstart,blockSize);
 
         Inode i= fetchInode(f,2,super,groupDescriptor,blockSize,filesystemstart);
       //  Inode i2= fetchInode(f,4,super,groupDescriptor,blockSize,filesystemstart);
-        cout <<"Inode size "<<dec << sizeof(i) <<" "<<i.i_size <<endl;
         uint8_t* buf2 = new uint8_t[blockSize];
-        cout <<"Iblock number for Inode 2  " << i.i_block[0]<<" mode "<< i.i_mode <<" "<< i.i_file_acl<< endl;
-      //   cout <<"Iblock number for Inode 2  " << i2.i_block[0]<<" mode "<< i2.i_mode <<" "<< i2.i_file_acl<< endl;
+            //   cout <<"Iblock number for Inode 2  " << i2.i_block[0]<<" mode "<< i2.i_mode <<" "<< i2.i_file_acl<< endl;
         uint8_t *check=fetchBlock(f, i.i_block[0],buf2,filesystemstart,blockSize);
-      //  cout<< unsigned(*check+1)<<endl;
       //  if(S_ISDIR(i.i_mode)){cout<< "yes it is dir"<< endl;}
         uint8_t* buf3 = new uint8_t[blockSize];
        fetchBlockfromFile(f,&i,0,buf3,blockSize,filesystemstart);
 
-        dirEntry *entry=(dirEntry *)buf3;
-          cout << sizeof(dirEntry)<< "dir entry "<< endl;
-readDir(i.i_size,buf3);
+         readDir(i.i_size,buf3);
+         int totalBlocks=blockSize*groupCount;
+         unsigned int allBitmap[blockSize*groupCount];
       //printing the buffer
-/*  for (int i = 0; i < 200; i++)
-        {
-          cout << (char)buf3[i]<< "    ";
-          printf("i,%#x\n", buf3[i]);
 
+      //INode bitmap
+      for (int i=0; i < groupCount;i++){
+        uint8_t* bit = new uint8_t[blockSize];
+        uint8_t* fBlock1 = fetchBlock(f,groupDescriptor[i].inode_bitmap,bit,filesystemstart,blockSize);
+        for (int j= 0; j <blockSize; j++)
+        {
+          int val= bin(bit[j]);
+        //  cout <<dec << i*blockSize+j<< endl;
+          allBitmap[i*blockSize+j]=val;
+        }
+      }
+      for (int i = 0; i < totalBlocks; i++){
+      cout <<allBitmap[i]<<" ";
+      if (i%1024==0)cout <<" "<<endl;
+      }
+
+      bool usedNotused[totalBlocks];
+    for (int i=0;i < blockSize*groupCount;i++ ){
+      if( allBitmap[i]==1)usedNotused[i]=true;
+      else if(allBitmap[i]==0)usedNotused[i]=false;
+      else cout << "Error"<< endl;
+      }
+
+
+
+       //Comparing and Correcting Superblock;
+        for (int i = 0 ; i < groupCount;i++){
+          if (power357(i)|| i==0){
+            Superblock s1;
+            fetchBlock(f,super.s_blocks_per_group*i+1,(uint8_t*)&s1,filesystemstart,blockSize);
+            compareSuperblock(super,s1);
+          }
+        }
+
+        //Comparing and Correcting group_descriptor;
+      /*  group_descriptor g[groupCount];
+        for (int i = 0 ; i < groupCount;i++){
+          if (power357(i)|| i==0){
+            int locationGroup= (super.s_blocks_per_group*i+2)*blockSize+filesystemstart;
+            int geb = readGroupDescriptor(f,locationGroup, g, groupCount);
+            compareGroupDes(groupDescriptor,g,groupCount);
+
+          }
         }*/
 
         // calculate total filesystem size
@@ -108,5 +143,18 @@ readDir(i.i_size,buf3);
         // calculate used used space
         unsigned int uSpace = blockSize * (super.s_blocks_count - super.s_free_blocks_count);
         printf("Used Space: %u bytes\n", uSpace );
+
+        //Block Size
+        cout << "Block Size:"<<dec<< blockSize<< " bytes"<< endl;
+        //State of file system
+        cout << "State of Filesystem: ";
+        if (super.s_state==1){cout << "Clean"<< endl;}
+        else if (super.s_state==2){cout << "FIle has error"<< endl;}
+        else cout << "Error reading Superblock"<< endl;
+
+        for (int i = 0 ; i<15; i++){
+
+        }
+
 
 }
