@@ -15,6 +15,7 @@
 #include <fcntl.h>
 #include "dir.h"
 #include <string.h>
+#include <list>
 using namespace std;
 
   int vdifileopen(VDIFile *v,  char* name){
@@ -163,11 +164,10 @@ off_t location;
   }
 
 //FUnction to read Directory
-  void readDir( int inodeSize, uint8_t *buff){
+  int readDir( int inodeSize, uint8_t *buff, int nodes[]){
       dirEntry *entry;
-    //  List<int> inodes= new List<int>;
-
       unsigned int cursor=24;
+      int i=0;
       entry=(dirEntry *)(buff+cursor);
        int rec=entry->rec_len;
       while(cursor < inodeSize ) {
@@ -175,13 +175,12 @@ off_t location;
       memcpy(file_name, entry->name, entry->name_len);
       file_name[entry->name_len] = '\0';              // append null char to the file name
       printf("Inode,%10u %s\n", entry->inode, file_name);
-// entry  += entry->rec_len;      // move to the next entry
-    //  Inode i= fetchInode(f,entry->inode,super,groupDescriptor,blockSize,filesystemstart);
-    //    inodes.push(entry->inode);
+     nodes[i]=entry->inode;
+      i++;
       cursor+= entry->rec_len;
       entry=(dirEntry *)(buff+cursor);
     }
-//    retutn inodes;
+    return i;
   //  free(entry)
 
   }
@@ -272,7 +271,7 @@ void compareGroupDes(group_descriptor g[],group_descriptor rhs[],unsigned int gr
     bin(n>>1);
     return(n &1);
     }
-    
+
   void bin2(unsigned n){
     if (n > 1)
     bin(n>>1);

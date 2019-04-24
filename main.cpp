@@ -16,6 +16,8 @@
 #include <string>
 #include<sys/stat.h>
 #include <cstdio>
+#include<list>
+#include<array>
 using namespace std;
 
 int main(int  argc,  char* argv[]){
@@ -81,8 +83,8 @@ int main(int  argc,  char* argv[]){
       //  if(S_ISDIR(i.i_mode)){cout<< "yes it is dir"<< endl;}
         uint8_t* buf3 = new uint8_t[blockSize];
        fetchBlockfromFile(f,&i,0,buf3,blockSize,filesystemstart);
-
-         readDir(i.i_size,buf3);
+       int a[4];
+      readDir(i.i_size,buf3,a);
          int totalBlocks=blockSize*groupCount;
          unsigned int allBitmap[blockSize*groupCount];
       //printing the buffer
@@ -98,19 +100,40 @@ int main(int  argc,  char* argv[]){
           allBitmap[i*blockSize+j]=val;
         }
       }
-      for (int i = 0; i < totalBlocks; i++){
-      cout <<allBitmap[i]<<" ";
-      if (i%1024==0)cout <<" "<<endl;
+      int blockBitmaps[totalBlocks];
+      for (int i=0; i < groupCount;i++){
+        uint8_t* bit = new uint8_t[blockSize];
+        uint8_t* fBlock1 = fetchBlock(f,groupDescriptor[i].block_bitmap,bit,filesystemstart,blockSize);
+        for (int j= 0; j <blockSize; j++)
+        {
+          int val= bin(bit[j]);
+        //  cout <<dec << i*blockSize+j<< endl;
+          blockBitmaps[i*blockSize+j]=val;
+        }
       }
+      for (int i = 0; i < totalBlocks; i++){
+      cout << blockBitmaps[i]<<allBitmap[i]<< " ";
+      if (i%1024==0)cout <<" "<<endl;
+    }
 
-      bool usedNotused[totalBlocks];
+  /*    bool usedNotused[totalBlocks];
     for (int i=0;i < blockSize*groupCount;i++ ){
-      if( allBitmap[i]==1)usedNotused[i]=true;
-      else if(allBitmap[i]==0)usedNotused[i]=false;
+      if( allBitmap[i]==blockBitmaps[i])cout << "match "<< endl;
       else cout << "Error"<< endl;
       }
+*/
 
 
+    /*    for (int j=0; j< sizeof(a)/sizeof(*a);j++){
+          Inode i= fetchInode(f,a[j],super,groupDescriptor,blockSize,filesystemstart);
+          for (int k = 0 ; k<15;k++){
+          uint8_t* buf8 = new uint8_t[blockSize];
+          if(i.i_block[j]!=0){
+          fetchBlockfromFile(f,&i,i.i_block[0],buf8,blockSize,filesystemstart);
+          int c = readDir(i.i_size,buf8,a);
+        }
+        }
+      }*/
 
        //Comparing and Correcting Superblock;
         for (int i = 0 ; i < groupCount;i++){
