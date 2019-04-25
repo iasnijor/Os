@@ -84,9 +84,10 @@ int main(int  argc,  char* argv[]){
         uint8_t* buf3 = new uint8_t[blockSize];
        fetchBlockfromFile(f,&i,0,buf3,blockSize,filesystemstart);
        int a[4];
-      readDir(i.i_size,buf3,a);
+       readDir(i.i_size,buf3,a);
          int totalBlocks=blockSize*groupCount;
          unsigned int allBitmap[blockSize*groupCount];
+
       //printing the buffer
 
       //INode bitmap
@@ -114,7 +115,7 @@ int main(int  argc,  char* argv[]){
       for (int i = 0; i < totalBlocks; i++){
       cout << blockBitmaps[i]<<allBitmap[i]<< " ";
       if (i%1024==0)cout <<" "<<endl;
-    }
+      }
 
   /*    bool usedNotused[totalBlocks];
     for (int i=0;i < blockSize*groupCount;i++ ){
@@ -154,6 +155,14 @@ int main(int  argc,  char* argv[]){
 
           }
         }*/
+
+
+          /* code */
+          Inode buffer = fetchInode(f,2,super,groupDescriptor,blockSize,filesystemstart);
+          int t = checkInode(f,2,super,groupDescriptor,blockSize,filesystemstart);
+
+
+
 
         // calculate total filesystem size
         unsigned int fsSize = super.s_blocks_count * blockSize;

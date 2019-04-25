@@ -16,6 +16,13 @@
 #include "dir.h"
 #include <string.h>
 #include <list>
+#include <sys/types.h>
+#include <sys/stat.h>
+
+
+#define EXT2_S_IFREG  0x8000
+#define EXT2_S_IFDIR 0x2000
+
 using namespace std;
 
   int vdifileopen(VDIFile *v,  char* name){
@@ -108,18 +115,19 @@ off_t location;
 
    // Function to fetch inode
    Inode fetchInode(VDIFile *f,int inodeNumber,Superblock super, group_descriptor group[],unsigned int blockSize,int filesystemstart){
-   Inode inode;
-   Inode* ibuff = new Inode[blockSize];
-   inodeNumber--;
-   unsigned int blockgroup      = inodeNumber/super.s_inodes_per_group;
-   unsigned int blockGroupNum   = inodeNumber % super.s_inodes_per_group;
-   unsigned int inodesPerBlock  = blockSize/sizeof(Inode);
-   unsigned int blockNumber     = blockGroupNum/inodesPerBlock;
-   inodeNumber= blockGroupNum% inodesPerBlock;
-   int  blockNum =group[blockgroup].inode_table+blockNumber;
-   fetchBlock(f,blockNum,(uint8_t*)ibuff,filesystemstart,blockSize);
-   return ibuff[inodeNumber];
+     Inode inode;
+     Inode* ibuff = new Inode[blockSize];
+     inodeNumber--;
+     unsigned int blockgroup      = inodeNumber/super.s_inodes_per_group;
+     unsigned int blockGroupNum   = inodeNumber % super.s_inodes_per_group;
+     unsigned int inodesPerBlock  = blockSize/sizeof(Inode);
+     unsigned int blockNumber     = blockGroupNum/inodesPerBlock;
+     inodeNumber= blockGroupNum% inodesPerBlock;
+     int  blockNum =group[blockgroup].inode_table+blockNumber;
+     fetchBlock(f,blockNum,(uint8_t*)ibuff,filesystemstart,blockSize);
+     return ibuff[inodeNumber];
  }
+
 
 //Print Entries of Superblock
  void printSuperBlock(Superblock &super){
@@ -265,6 +273,22 @@ void compareGroupDes(group_descriptor g[],group_descriptor rhs[],unsigned int gr
     if(g[i].pad!= rhs[i].pad){cout << "Erro pad"<< endl;rhs[i].pad=g[i].pad;}
       }
     }
+
+  int checkInode(VDIFile *f, unsigned int inodeNum,Superblock super, group_descriptor group[], unsigned int blockSize,int filesystemstart){
+    Inode i = fetchInode(f,inodeNum,super,group,blockSize,filesystemstart);
+    if(S_ISREG(i.i_mode)){
+      cout << "file" << endl;
+    }
+
+    if(S_ISDIR(i.i_mode)){
+      printf("%d\n", i.i_mode);
+      cout << i.i_mode << endl;
+    }
+
+    else {
+      printf("Inode is not used\n");
+    }
+  }
     int bin(unsigned n)
     {
     if (n > 1)
@@ -277,6 +301,7 @@ void compareGroupDes(group_descriptor g[],group_descriptor rhs[],unsigned int gr
     bin(n>>1);
     printf("%d\n", n & 1);
     }
+
 
   bool power357(unsigned int number){
         return ((number!=0 && 1162261467%number==0) || (number !=0 && 762939453125%number ==0 )|| (number!=0 && 678223072849%number ==0));
