@@ -19,20 +19,21 @@
 #include<sys/stat.h>
 
 using namespace std;
-
+//Mimics UNIX file Open
   int vdifileopen(VDIFile *v,  char* name){
     v->file = open(name,O_RDWR);
     return v->file;
   }
-
+  //Mimics UNIX file close
   void vdiFileClose(VDIFile *v){
     if (!v)
     return;
     close(v->file);
   }
 
+  //Mimics UNIX file seeking
   off_t VDISeek (VDIFile* f, off_t off, int whence){
-off_t location;
+    off_t location;
         if (whence == SEEK_SET)
 	{
 		location = lseek(f->file, off, whence);
@@ -110,18 +111,19 @@ off_t location;
 
    // Function to fetch inode
    Inode fetchInode(VDIFile *f,int inodeNumber,Superblock super, group_descriptor group[],unsigned int blockSize,int filesystemstart){
-   Inode inode;
-   Inode* ibuff = new Inode[blockSize];
-   inodeNumber--;
-   unsigned int blockgroup      = inodeNumber/super.s_inodes_per_group;
-   unsigned int blockGroupNum   = inodeNumber % super.s_inodes_per_group;
-   unsigned int inodesPerBlock  = blockSize/sizeof(Inode);
-   unsigned int blockNumber     = blockGroupNum/inodesPerBlock;
-   inodeNumber= blockGroupNum% inodesPerBlock;
-   int  blockNum =group[blockgroup].inode_table+blockNumber;
-   fetchBlock(f,blockNum,(uint8_t*)ibuff,filesystemstart,blockSize);
-   return ibuff[inodeNumber];
+     Inode inode;
+     Inode* ibuff = new Inode[blockSize];
+     inodeNumber--;
+     unsigned int blockgroup      = inodeNumber/super.s_inodes_per_group;
+     unsigned int blockGroupNum   = inodeNumber % super.s_inodes_per_group;
+     unsigned int inodesPerBlock  = blockSize/sizeof(Inode);
+     unsigned int blockNumber     = blockGroupNum/inodesPerBlock;
+     inodeNumber= blockGroupNum% inodesPerBlock;
+     int  blockNum =group[blockgroup].inode_table+blockNumber;
+     fetchBlock(f,blockNum,(uint8_t*)ibuff,filesystemstart,blockSize);
+     return ibuff[inodeNumber];
  }
+
 
 //Print Entries of Superblock
  void printSuperBlock(Superblock &super){
@@ -165,8 +167,7 @@ off_t location;
     cout <<"Number of existing directories: "<<usedDir <<endl;
   }
 
-//FUnction to read Directory
-
+  //FUnction to fetch block from inode
   void fetchBlockfromFile(VDIFile*f,Inode *i, int inodeBlockNum, uint8_t *buff,unsigned int blockSize, int filesystemstart ){
       unsigned int *list;
         unsigned int ipb=blockSize/4;
@@ -205,6 +206,8 @@ off_t location;
          fetchBlock(f,list[inodeBlockNum],buff,filesystemstart,blockSize);
                 }
        }
+
+       //FUnction to read  and traverse Directory
        int readDir(VDIFile *f,Superblock super, group_descriptor *groupDescriptor,int filesystemstart,
          int blockSize, int inodeSize, uint8_t *buff, std::vector<int> &in ,
          std::vector<string> &dir,std::vector<string> &fil){
@@ -225,9 +228,9 @@ off_t location;
            if(name!="lost+found"){
            std::vector<int> in3;
         //   in3= traverseinodes(f,super,groupDescriptor,filesystemstart,blockSize,dir,fil,entry->inode);
-        Inode i= fetchInode(f,entry->inode,super,groupDescriptor,blockSize,filesystemstart);
-        if(S_ISREG(i.i_mode)){cout<<"Its a file."<<endl;}
-        if(S_ISDIR(i.i_mode)){
+          Inode i= fetchInode(f,entry->inode,super,groupDescriptor,blockSize,filesystemstart);
+          if(S_ISREG(i.i_mode)){cout<<"Its a file."<<endl;}
+          if(S_ISDIR(i.i_mode)){
           for (int j = 0 ; j <15;j++){
             if(i.i_block[j]!=0){
               cout <<dec<< "Block is used "<<j<< endl;
@@ -250,6 +253,7 @@ off_t location;
 
        }
 
+//Function to compare and correct Superblock
  void compareSuperblock(Superblock super, Superblock rhs){
    if (super.s_inodes_count!= rhs.s_inodes_count){cout << "Eroorin Superblock"<< endl;rhs.s_inodes_count=super.s_inodes_count;}
    if (super.s_blocks_count !=rhs.s_blocks_count){rhs.s_blocks_count=super.s_blocks_count;}
@@ -281,6 +285,8 @@ off_t location;
    if(super.s_block_group_nr!=rhs.s_block_group_nr){rhs.s_block_group_nr=super.s_block_group_nr;}
 
  }
+
+ //Function to compare and correct groupDescriptor
 void compareGroupDes(group_descriptor g[],group_descriptor rhs[],unsigned int groupCount){
   for (int i =0 ; i < groupCount; i++ ){
     if(g[i].block_bitmap!= rhs[i].block_bitmap){cout <<"Error block_bitmap "<<i<< endl;rhs[i].block_bitmap=g[i].block_bitmap;}
@@ -293,17 +299,21 @@ void compareGroupDes(group_descriptor g[],group_descriptor rhs[],unsigned int gr
       }
     }
 
+//Checks if the number is power of 357
+// I got this function from https://stackoverflow.com/questions/1804311/how-to-check-if-an-integer-is-a-power-of-3
+// it chcks powers upto 3 ^19 , 5^17 and 7^14
   bool power357(unsigned int number){
         return ((number!=0 && 1162261467%number==0) || (number !=0 && 762939453125%number ==0 )|| (number!=0 && 678223072849%number ==0));
       }
 
-
+// Print a vector
     void printinodeNumber(vector<int> &v){
       for (int i=0; i<v.size();i++){
         cout << v.at(i)<< endl;
       }
     }
 
+//Print bitmaps
     void printbitmaps(string bitmap[], int totalBlocks){
       for (int i=0;i<totalBlocks;i++){
         cout <<dec<< bitmap[i]<<endl;

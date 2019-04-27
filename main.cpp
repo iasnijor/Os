@@ -95,9 +95,8 @@ int main(int  argc,  char* argv[]){
           fetchBlockfromFile(f,&i,j,buf3,blockSize,filesystemstart);
            totalnumbers=readDir(f,super,groupDescriptor,filesystemstart,blockSize,i.i_size,buf3,inodesnumbers, directories,files);
     }}
-         int totalBlocks=blockSize*groupCount;
-         string  inodeBitmap[totalBlocks];
-      //printing the buffer
+      int totalBlocks=blockSize*groupCount;
+       string  inodeBitmap[totalBlocks];
 
       //INode bitmap
       int size=0;
