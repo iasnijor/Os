@@ -16,8 +16,9 @@
 #include <string>
 #include<sys/stat.h>
 #include <cstdio>
-#include<list>
+#include<vector>
 #include<array>
+#include<bitset>
 using namespace std;
 
 int main(int  argc,  char* argv[]){
@@ -73,69 +74,98 @@ int main(int  argc,  char* argv[]){
 
 
         uint8_t* buf = new uint8_t[blockSize];
-        uint8_t* fBlock = fetchBlock(f, 259,buf,filesystemstart,blockSize);
+        uint8_t* fBlock = fetchBlock(f,260,buf,filesystemstart,blockSize);
+      /*  for (int k = 0; k< blockSize; k++)
+              {
+                cout << (int)fBlock[k]<< "  ";
+                printf("%x\n",fBlock[k]);
+              }*/
 
+        vector<int> inodesnumbers;
         Inode i= fetchInode(f,2,super,groupDescriptor,blockSize,filesystemstart);
-      //  Inode i2= fetchInode(f,4,super,groupDescriptor,blockSize,filesystemstart);
         uint8_t* buf2 = new uint8_t[blockSize];
-            //   cout <<"Iblock number for Inode 2  " << i2.i_block[0]<<" mode "<< i2.i_mode <<" "<< i2.i_file_acl<< endl;
         uint8_t *check=fetchBlock(f, i.i_block[0],buf2,filesystemstart,blockSize);
       //  if(S_ISDIR(i.i_mode)){cout<< "yes it is dir"<< endl;}
-        uint8_t* buf3 = new uint8_t[blockSize];
-       fetchBlockfromFile(f,&i,0,buf3,blockSize,filesystemstart);
-       int a[4];
-      readDir(i.i_size,buf3,a);
+      std::vector<string> directories;
+      std::vector<string> files;
+      int totalnumbers=0;
+      for (int j=0; j<15;j++){
+          if(i.i_block[j]!=0){
+          uint8_t* buf3 = new uint8_t[blockSize];
+          fetchBlockfromFile(f,&i,j,buf3,blockSize,filesystemstart);
+           totalnumbers=readDir(f,super,groupDescriptor,filesystemstart,blockSize,i.i_size,buf3,inodesnumbers, directories,files);
+    }}
          int totalBlocks=blockSize*groupCount;
-         unsigned int allBitmap[blockSize*groupCount];
+         string  inodeBitmap[totalBlocks];
       //printing the buffer
 
       //INode bitmap
+      int size=0;
       for (int i=0; i < groupCount;i++){
         uint8_t* bit = new uint8_t[blockSize];
         uint8_t* fBlock1 = fetchBlock(f,groupDescriptor[i].inode_bitmap,bit,filesystemstart,blockSize);
         for (int j= 0; j <blockSize; j++)
         {
-          int val= bin(bit[j]);
-        //  cout <<dec << i*blockSize+j<< endl;
-          allBitmap[i*blockSize+j]=val;
+          if (j%1024==0)cout << " "<< endl;
+          cout << (int) bit[j]<< " ";
+          if((int)bit[j]>0){size++;}
+         string val= bitset<8>(bit[j]).to_string();
+          inodeBitmap[i*blockSize+j]=val;
         }
       }
-      int blockBitmaps[totalBlocks];
+      string blockBitmaps[totalBlocks];
+
       for (int i=0; i < groupCount;i++){
         uint8_t* bit = new uint8_t[blockSize];
         uint8_t* fBlock1 = fetchBlock(f,groupDescriptor[i].block_bitmap,bit,filesystemstart,blockSize);
         for (int j= 0; j <blockSize; j++)
         {
-          int val= bin(bit[j]);
-        //  cout <<dec << i*blockSize+j<< endl;
+
+        string val=bitset<8>(bit[j]).to_string();
           blockBitmaps[i*blockSize+j]=val;
         }
       }
-      for (int i = 0; i < totalBlocks; i++){
-      cout << blockBitmaps[i]<<allBitmap[i]<< " ";
-      if (i%1024==0)cout <<" "<<endl;
-    }
 
-  /*    bool usedNotused[totalBlocks];
-    for (int i=0;i < blockSize*groupCount;i++ ){
-      if( allBitmap[i]==blockBitmaps[i])cout << "match "<< endl;
-      else cout << "Error"<< endl;
-      }
-*/
+    /*  for (int i = 0 ;i <totalBlocks;i++){cout << blockBitmaps[i]<<" ";
+    if (i%1024==0)cout << ""<<endl;}*/
 
 
-    /*    for (int j=0; j< sizeof(a)/sizeof(*a);j++){
-          Inode i= fetchInode(f,a[j],super,groupDescriptor,blockSize,filesystemstart);
-          for (int k = 0 ; k<15;k++){
-          uint8_t* buf8 = new uint8_t[blockSize];
-          if(i.i_block[j]!=0){
-          fetchBlockfromFile(f,&i,i.i_block[0],buf8,blockSize,filesystemstart);
-          int c = readDir(i.i_size,buf8,a);
+  //     cout << "Directories" << endl;
+    //  for(int i =0;i<directories.size();i++){cout <<"a"<< directories.at(i)<<endl;}
+      //  cout << "Files"<< endl;
+        //for(int i =0;i<files.size();i++){cout << files.at(i)<<endl;}
+       //printinodeNumber(inodesnumbers);
+       //cout << inodesnumbers.size()<<"equals "<< totalnumbers<<super.s_inodes_count-super.s_free_inodes_count<< endl;
+              /*   for (int k = 0; k< 200; k++)
+                    {
+                      cout << (char)buf9[k]<< "  ";
+                      printf("%x\n", buf9[k]);
+                    }*/
+
+
+        string checkinodebitmap[totalBlocks];
+        for (int i = 0 ; i <totalBlocks;i++){checkinodebitmap[i]="00000000";}
+        for (int i = 0 ; i <inodesnumbers.size();i++){
+        unsigned int inodeNum=inodesnumbers.at(i);
+        inodeNum--;
+        unsigned int blockGroup=inodeNum/super.s_inodes_per_group;
+        unsigned int index=inodeNum%super.s_inodes_per_group;
+        unsigned int byteOffset=index/8;
+        unsigned int bit=index%8;
+    //    cout << blockGroup<<" "<<byteOffset<< " "<<bit<<" "<< inodeNum<<" ";
+        int inodeindex= blockGroup*blockSize+byteOffset;
+        checkinodebitmap[inodeindex][bit]='1';
+      //  cout <<checkinodebitmap[inodeindex]<< endl;
+
+        //bit=1<<bit;
         }
-        }
-      }*/
 
-       //Comparing and Correcting Superblock;
+
+    //  printbitmaps(inodeBitmap,totalBlocks);
+    //  printbitmaps(checkinodebitmap,totalBlocks);
+      //  printbitmaps2(checkinodebitmap,inodeBitmap,totalBlocks);
+
+        //Comparing and Correcting Superblock;
         for (int i = 0 ; i < groupCount;i++){
           if (power357(i)|| i==0){
             Superblock s1;
@@ -154,7 +184,7 @@ int main(int  argc,  char* argv[]){
 
           }
         }*/
-
+        cout <<"SIZEEEE"<< size << endl;
         // calculate total filesystem size
         unsigned int fsSize = super.s_blocks_count * blockSize;
         printf("Total size of Filesystem: %u bytes\n", fsSize);
@@ -175,9 +205,6 @@ int main(int  argc,  char* argv[]){
         else if (super.s_state==2){cout << "FIle has error"<< endl;}
         else cout << "Error reading Superblock"<< endl;
 
-        for (int i = 0 ; i<15; i++){
-
-        }
 
 
 }

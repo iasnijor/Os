@@ -15,7 +15,9 @@
 #include <fcntl.h>
 #include "dir.h"
 #include <string.h>
-#include <list>
+#include <vector>
+#include<sys/stat.h>
+
 using namespace std;
 
   int vdifileopen(VDIFile *v,  char* name){
@@ -70,7 +72,7 @@ off_t location;
   ssize_t VDIread(VDIFile *v,void *buff,ssize_t num){
     ssize_t nBytes= read(v->file,buff,num);
     if (num != nBytes){
-      cout <<"Error";
+      cout <<"Error here ";
       return 1;
     }
     return nBytes;
@@ -164,26 +166,6 @@ off_t location;
   }
 
 //FUnction to read Directory
-  int readDir( int inodeSize, uint8_t *buff, int nodes[]){
-      dirEntry *entry;
-      unsigned int cursor=24;
-      int i=0;
-      entry=(dirEntry *)(buff+cursor);
-       int rec=entry->rec_len;
-      while(cursor < inodeSize ) {
-      char file_name[256];
-      memcpy(file_name, entry->name, entry->name_len);
-      file_name[entry->name_len] = '\0';              // append null char to the file name
-      printf("Inode,%10u %s\n", entry->inode, file_name);
-     nodes[i]=entry->inode;
-      i++;
-      cursor+= entry->rec_len;
-      entry=(dirEntry *)(buff+cursor);
-    }
-    return i;
-  //  free(entry)
-
-  }
 
   void fetchBlockfromFile(VDIFile*f,Inode *i, int inodeBlockNum, uint8_t *buff,unsigned int blockSize, int filesystemstart ){
       unsigned int *list;
@@ -223,6 +205,51 @@ off_t location;
          fetchBlock(f,list[inodeBlockNum],buff,filesystemstart,blockSize);
                 }
        }
+       int readDir(VDIFile *f,Superblock super, group_descriptor *groupDescriptor,int filesystemstart,
+         int blockSize, int inodeSize, uint8_t *buff, std::vector<int> &in ,
+         std::vector<string> &dir,std::vector<string> &fil){
+           dirEntry *entry;
+           unsigned int cursor=24;
+           int i=0,x=0;
+           entry=(dirEntry *)(buff+cursor);
+            int rec=entry->rec_len;
+           while(cursor < inodeSize ) {
+           char file_name[256];
+           memcpy(file_name, entry->name, entry->name_len);
+           file_name[entry->name_len] = '\0';
+           int type=(int)entry->file_type;
+           string name = (string)entry->name;
+           if(type==1){fil.push_back(name);}            // append null char to the file name
+           if(type==2 ){
+           dir.push_back(name);
+           if(name!="lost+found"){
+           std::vector<int> in3;
+        //   in3= traverseinodes(f,super,groupDescriptor,filesystemstart,blockSize,dir,fil,entry->inode);
+        Inode i= fetchInode(f,entry->inode,super,groupDescriptor,blockSize,filesystemstart);
+        if(S_ISREG(i.i_mode)){cout<<"Its a file."<<endl;}
+        if(S_ISDIR(i.i_mode)){
+          for (int j = 0 ; j <15;j++){
+            if(i.i_block[j]!=0){
+              cout <<dec<< "Block is used "<<j<< endl;
+            uint8_t* buf = new uint8_t[blockSize];
+             fetchBlockfromFile(f,&i,j,buf,blockSize,filesystemstart);
+            x+=readDir(f,super,groupDescriptor,filesystemstart,blockSize,i.i_size,buf,in,dir,fil);
+                    }
+              }
+          }
+            }
+         }
+          printf("Inode,%10u %s\n", entry->inode, file_name);
+           in.push_back(entry->inode);
+           i++;
+           cursor+= entry->rec_len;
+           entry=(dirEntry *)(buff+cursor);
+         }
+         return i+x;
+       //  free(entry)
+
+       }
+
  void compareSuperblock(Superblock super, Superblock rhs){
    if (super.s_inodes_count!= rhs.s_inodes_count){cout << "Eroorin Superblock"<< endl;rhs.s_inodes_count=super.s_inodes_count;}
    if (super.s_blocks_count !=rhs.s_blocks_count){rhs.s_blocks_count=super.s_blocks_count;}
@@ -265,20 +292,29 @@ void compareGroupDes(group_descriptor g[],group_descriptor rhs[],unsigned int gr
     if(g[i].pad!= rhs[i].pad){cout << "Erro pad"<< endl;rhs[i].pad=g[i].pad;}
       }
     }
-    int bin(unsigned n)
-    {
-    if (n > 1)
-    bin(n>>1);
-    return(n &1);
-    }
-
-  void bin2(unsigned n){
-    if (n > 1)
-    bin(n>>1);
-    printf("%d\n", n & 1);
-    }
 
   bool power357(unsigned int number){
         return ((number!=0 && 1162261467%number==0) || (number !=0 && 762939453125%number ==0 )|| (number!=0 && 678223072849%number ==0));
       }
+
+
+    void printinodeNumber(vector<int> &v){
+      for (int i=0; i<v.size();i++){
+        cout << v.at(i)<< endl;
+      }
+    }
+
+    void printbitmaps(string bitmap[], int totalBlocks){
+      for (int i=0;i<totalBlocks;i++){
+        cout <<dec<< bitmap[i]<<endl;
+        if (i%1024==0)cout << " "<< endl;
+      }
+    }
+    void printbitmaps2(string bitmap1[],string bitmap2[], int totalBlocks){
+      for (int i=0;i<totalBlocks;i++){
+        cout <<dec<< bitmap1[i]<< " "<< bitmap2[i]<< endl;
+        if (i%1024==0)cout << " "<< endl;
+      }
+    }
+
 #endif
