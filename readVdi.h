@@ -73,7 +73,7 @@ using namespace std;
   ssize_t VDIread(VDIFile *v,void *buff,ssize_t num){
     ssize_t nBytes= read(v->file,buff,num);
     if (num != nBytes){
-      cout <<"Error here ";
+  //    cout <<"Error here ";
       return 1;
     }
     return nBytes;
@@ -102,15 +102,17 @@ using namespace std;
     }
 
     //Function to fetchBlock
-    uint8_t* fetchBlock(VDIFile *f, unsigned int blockNum, uint8_t* buff, int location, unsigned int blockSize){
+    uint8_t* fetchBlock(VDIFile *f, unsigned int blockNum, uint8_t* buff, int location, unsigned int blockSize, std::vector<int> &Block){
       int num = (blockNum * blockSize) + location;
+    //  cout << blockNum <<" "<< Block.size()<< endl;
+      Block.push_back(blockNum);
       off_t offset=VDISeek(f, num , SEEK_SET);
       int block=VDIread(f, buff, blockSize);
       return buff;
     }
 
    // Function to fetch inode
-   Inode fetchInode(VDIFile *f,int inodeNumber,Superblock super, group_descriptor group[],unsigned int blockSize,int filesystemstart){
+   Inode fetchInode(VDIFile *f,int inodeNumber,Superblock super, group_descriptor group[],unsigned int blockSize,int filesystemstart,std::vector<int> &Block){
      Inode inode;
      Inode* ibuff = new Inode[blockSize];
      inodeNumber--;
@@ -120,7 +122,7 @@ using namespace std;
      unsigned int blockNumber     = blockGroupNum/inodesPerBlock;
      inodeNumber= blockGroupNum% inodesPerBlock;
      int  blockNum =group[blockgroup].inode_table+blockNumber;
-     fetchBlock(f,blockNum,(uint8_t*)ibuff,filesystemstart,blockSize);
+     fetchBlock(f,blockNum,(uint8_t*)ibuff,filesystemstart,blockSize,Block);
      return ibuff[inodeNumber];
  }
 
@@ -168,7 +170,7 @@ using namespace std;
   }
 
   //FUnction to fetch block from inode
-  void fetchBlockfromFile(VDIFile*f,Inode *i, int inodeBlockNum, uint8_t *buff,unsigned int blockSize, int filesystemstart ){
+  void fetchBlockfromFile(VDIFile*f,Inode *i, int inodeBlockNum, uint8_t *buff,unsigned int blockSize, int filesystemstart,std::vector<int> &Block ){
       unsigned int *list;
         unsigned int ipb=blockSize/4;
        if (inodeBlockNum <12){
@@ -187,30 +189,30 @@ using namespace std;
      }
      inodeBlockNum-=ipb*ipb;
      list=i->i_block+14;
-       fetchBlock(f,list[inodeBlockNum/(ipb*ipb*ipb)],buff,filesystemstart,blockSize);
+       fetchBlock(f,list[inodeBlockNum/(ipb*ipb*ipb)],buff,filesystemstart,blockSize,Block);
        list= ((unsigned *)buff);
        inodeBlockNum %= ipb * ipb * ipb;
 
      Double:
        {
-         fetchBlock(f,list[inodeBlockNum/(ipb*ipb)],buff,filesystemstart,blockSize);
+         fetchBlock(f,list[inodeBlockNum/(ipb*ipb)],buff,filesystemstart,blockSize,Block);
          list= ((unsigned *)buff);
          inodeBlockNum %= ipb * ipb;
        }
        Single :{
-         fetchBlock(f,list[inodeBlockNum/(ipb)],buff,filesystemstart,blockSize);
+         fetchBlock(f,list[inodeBlockNum/(ipb)],buff,filesystemstart,blockSize,Block);
          list= ((unsigned *)buff);
          inodeBlockNum= inodeBlockNum%ipb;
        }
        Direct:{
-         fetchBlock(f,list[inodeBlockNum],buff,filesystemstart,blockSize);
+         fetchBlock(f,list[inodeBlockNum],buff,filesystemstart,blockSize,Block);
                 }
        }
 
        //FUnction to read  and traverse Directory
        int readDir(VDIFile *f,Superblock super, group_descriptor *groupDescriptor,int filesystemstart,
          int blockSize, int inodeSize, uint8_t *buff, std::vector<int> &in ,
-         std::vector<string> &dir,std::vector<string> &fil){
+         std::vector<string> &dir,std::vector<string> &fil,std::vector<int> &Block){
            dirEntry *entry;
            unsigned int cursor=24;
            int i=0,x=0;
@@ -228,15 +230,15 @@ using namespace std;
            if(name!="lost+found"){
            std::vector<int> in3;
         //   in3= traverseinodes(f,super,groupDescriptor,filesystemstart,blockSize,dir,fil,entry->inode);
-          Inode i= fetchInode(f,entry->inode,super,groupDescriptor,blockSize,filesystemstart);
+          Inode i= fetchInode(f,entry->inode,super,groupDescriptor,blockSize,filesystemstart,Block);
           if(S_ISREG(i.i_mode)){cout<<"Its a file."<<endl;}
           if(S_ISDIR(i.i_mode)){
           for (int j = 0 ; j <15;j++){
             if(i.i_block[j]!=0){
               cout <<dec<< "Block is used "<<j<< endl;
             uint8_t* buf = new uint8_t[blockSize];
-             fetchBlockfromFile(f,&i,j,buf,blockSize,filesystemstart);
-            x+=readDir(f,super,groupDescriptor,filesystemstart,blockSize,i.i_size,buf,in,dir,fil);
+             fetchBlockfromFile(f,&i,j,buf,blockSize,filesystemstart,Block);
+            x+=readDir(f,super,groupDescriptor,filesystemstart,blockSize,i.i_size,buf,in,dir,fil,Block);
                     }
               }
           }
@@ -314,14 +316,14 @@ void compareGroupDes(group_descriptor g[],group_descriptor rhs[],unsigned int gr
     }
 
 //Print bitmaps
-    void printbitmaps(string bitmap[], int totalBlocks){
-      for (int i=0;i<totalBlocks;i++){
-        cout <<dec<< bitmap[i]<<endl;
-        if (i%1024==0)cout << " "<< endl;
+    void printbitmaps(int bitmap[], int totalBlocks){
+      for (int i=0;i<254*16;i++){
+        if (i%254==0)cout << " "<< endl;
+            cout <<dec<< bitmap[i]<<" ";
       }
     }
     void printbitmaps2(string bitmap1[],string bitmap2[], int totalBlocks){
-      for (int i=0;i<totalBlocks;i++){
+      for (int i=0;i<254*16;i++){
         cout <<dec<< bitmap1[i]<< " "<< bitmap2[i]<< endl;
         if (i%1024==0)cout << " "<< endl;
       }

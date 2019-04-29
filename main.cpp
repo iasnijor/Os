@@ -19,6 +19,7 @@
 #include<vector>
 #include<array>
 #include<bitset>
+#include <bits/stdc++.h>
 using namespace std;
 
 int main(int  argc,  char* argv[]){
@@ -74,17 +75,18 @@ int main(int  argc,  char* argv[]){
 
 
         uint8_t* buf = new uint8_t[blockSize];
-        uint8_t* fBlock = fetchBlock(f,260,buf,filesystemstart,blockSize);
+      //  uint8_t* fBlock = fetchBlock(f,260,buf,filesystemstart,blockSize,blocknumbers);
       /*  for (int k = 0; k< blockSize; k++)
               {
                 cout << (int)fBlock[k]<< "  ";
                 printf("%x\n",fBlock[k]);
               }*/
 
+        vector<int> blocknumbers;
         vector<int> inodesnumbers;
-        Inode i= fetchInode(f,2,super,groupDescriptor,blockSize,filesystemstart);
+        Inode i= fetchInode(f,2,super,groupDescriptor,blockSize,filesystemstart,blocknumbers);
         uint8_t* buf2 = new uint8_t[blockSize];
-        uint8_t *check=fetchBlock(f, i.i_block[0],buf2,filesystemstart,blockSize);
+        uint8_t *check=fetchBlock(f, i.i_block[0],buf2,filesystemstart,blockSize,blocknumbers);
       //  if(S_ISDIR(i.i_mode)){cout<< "yes it is dir"<< endl;}
       std::vector<string> directories;
       std::vector<string> files;
@@ -92,31 +94,30 @@ int main(int  argc,  char* argv[]){
       for (int j=0; j<15;j++){
           if(i.i_block[j]!=0){
           uint8_t* buf3 = new uint8_t[blockSize];
-          fetchBlockfromFile(f,&i,j,buf3,blockSize,filesystemstart);
-           totalnumbers=readDir(f,super,groupDescriptor,filesystemstart,blockSize,i.i_size,buf3,inodesnumbers, directories,files);
+          fetchBlockfromFile(f,&i,j,buf3,blockSize,filesystemstart,blocknumbers);
+           totalnumbers=readDir(f,super,groupDescriptor,filesystemstart,blockSize,i.i_size,buf3,inodesnumbers, directories,files,blocknumbers);
     }}
       int totalBlocks=blockSize*groupCount;
-       string  inodeBitmap[totalBlocks];
+       int inodeBitmap[254*groupCount];
 
       //INode bitmap
       int size=0;
       for (int i=0; i < groupCount;i++){
         uint8_t* bit = new uint8_t[blockSize];
-        uint8_t* fBlock1 = fetchBlock(f,groupDescriptor[i].inode_bitmap,bit,filesystemstart,blockSize);
-        for (int j= 0; j <blockSize; j++)
+        uint8_t* fBlock1 = fetchBlock(f,groupDescriptor[i].inode_bitmap,bit,filesystemstart,blockSize,blocknumbers);
+        for (int j= 0; j <254; j++)
         {
-          if (j%1024==0)cout << " "<< endl;
-          cout << (int) bit[j]<< " ";
-          if((int)bit[j]>0){size++;}
-         string val= bitset<8>(bit[j]).to_string();
-          inodeBitmap[i*blockSize+j]=val;
+        int val=(int)bit[j];
+        if((int)bit[j]>0){size++;}
+        //string val= bitset<8>(bit[j]).to_string();
+         inodeBitmap[i*254+j]=val;
         }
       }
       string blockBitmaps[totalBlocks];
 
       for (int i=0; i < groupCount;i++){
         uint8_t* bit = new uint8_t[blockSize];
-        uint8_t* fBlock1 = fetchBlock(f,groupDescriptor[i].block_bitmap,bit,filesystemstart,blockSize);
+        uint8_t* fBlock1 = fetchBlock(f,groupDescriptor[i].block_bitmap,bit,filesystemstart,blockSize,blocknumbers);
         for (int j= 0; j <blockSize; j++)
         {
 
@@ -124,6 +125,24 @@ int main(int  argc,  char* argv[]){
           blockBitmaps[i*blockSize+j]=val;
         }
       }
+    //    printbitmaps(inodeBitmap,totalBlocks);
+        int bitmapinode[2032*groupCount];
+        for (int i =0; i < 254*groupCount;i++){
+          int val = inodeBitmap[i];
+              int *bits = new int [sizeof(int) *8];
+              for(int k=0; k<8; k++){
+              int mask =  1 << k;
+              int masked_n = val & mask;
+              int thebit = masked_n >> k;
+              bitmapinode[i*8+(7-k)] = thebit;
+            }
+                }
+         for (int i=0;i<2032*16;i++){
+           if (i%8==0  )cout << " ";
+                                    if (i%2032==0  )cout << " "<< endl;
+                      cout <<dec<< bitmapinode[i]<<"";
+
+                }
 
     /*  for (int i = 0 ;i <totalBlocks;i++){cout << blockBitmaps[i]<<" ";
     if (i%1024==0)cout << ""<<endl;}*/
@@ -141,9 +160,12 @@ int main(int  argc,  char* argv[]){
                       printf("%x\n", buf9[k]);
                     }*/
 
-
-        string checkinodebitmap[totalBlocks];
-        for (int i = 0 ; i <totalBlocks;i++){checkinodebitmap[i]="00000000";}
+        cout << "checks    "<< endl;
+        cout << "checks    "<< endl;
+        cout << "checks    "<< endl;
+        int checkinodebitmap[totalBlocks];
+        for (int i = 0 ; i <2032*16;i++){checkinodebitmap[i]=0;}
+       for (int i = 1 ; i <11;i++){inodesnumbers.push_back(i);}
         for (int i = 0 ; i <inodesnumbers.size();i++){
         unsigned int inodeNum=inodesnumbers.at(i);
         inodeNum--;
@@ -151,24 +173,37 @@ int main(int  argc,  char* argv[]){
         unsigned int index=inodeNum%super.s_inodes_per_group;
         unsigned int byteOffset=index/8;
         unsigned int bit=index%8;
-    //    cout << blockGroup<<" "<<byteOffset<< " "<<bit<<" "<< inodeNum<<" ";
-        int inodeindex= blockGroup*blockSize+byteOffset;
-        checkinodebitmap[inodeindex][bit]='1';
+        cout << blockGroup<<" "<<byteOffset<< " "<<bit<<" "<< inodeNum<<" "<< " ";
+        int inodeindex= blockGroup*2032+byteOffset*8+(7-bit);
+        cout << inodeindex<< endl;
+        checkinodebitmap[inodeindex]=1;
+
       //  cout <<checkinodebitmap[inodeindex]<< endl;
 
         //bit=1<<bit;
         }
+        sort(inodesnumbers.begin(), inodesnumbers.end());
+      //  printinodeNumber(inodesnumbers);
+        for (int i=0;i<2032*16;i++){
+          if (i%8==0  )cout << " ";
+                                   if (i%2032==0  )cout << " "<< endl;
+                     cout << checkinodebitmap[i]<<"";
 
+               }
+
+      //  printinodeNumber(blocknumbers);
+        //cout << "size "<<blocknumbers.size()<< " "<< super.s_blocks_count-super.s_free_blocks_count<< endl;
+        //  printbitmaps(blockBitmaps,totalBlocks);
 
     //  printbitmaps(inodeBitmap,totalBlocks);
-    //  printbitmaps(checkinodebitmap,totalBlocks);
+  //    printbitmaps(checkinodebitmap,totalBlocks);
       //  printbitmaps2(checkinodebitmap,inodeBitmap,totalBlocks);
 
         //Comparing and Correcting Superblock;
         for (int i = 0 ; i < groupCount;i++){
           if (power357(i)|| i==0){
             Superblock s1;
-            fetchBlock(f,super.s_blocks_per_group*i+1,(uint8_t*)&s1,filesystemstart,blockSize);
+            fetchBlock(f,super.s_blocks_per_group*i+1,(uint8_t*)&s1,filesystemstart,blockSize,blocknumbers);
             compareSuperblock(super,s1);
           }
         }
