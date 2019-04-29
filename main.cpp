@@ -137,7 +137,7 @@ int main(int  argc,  char* argv[]){
               bitmapinode[i*8+(7-k)] = thebit;
             }
                 }
-         for (int i=0;i<2032*16;i++){
+      /*   for (int i=0;i<2032*16;i++){
            if (i%8==0  )cout << " ";
                                     if (i%2032==0  )cout << " "<< endl;
                       cout <<dec<< bitmapinode[i]<<"";
@@ -173,9 +173,9 @@ int main(int  argc,  char* argv[]){
         unsigned int index=inodeNum%super.s_inodes_per_group;
         unsigned int byteOffset=index/8;
         unsigned int bit=index%8;
-        cout << blockGroup<<" "<<byteOffset<< " "<<bit<<" "<< inodeNum<<" "<< " ";
+        //cout << blockGroup<<" "<<byteOffset<< " "<<bit<<" "<< inodeNum<<" "<< " ";
         int inodeindex= blockGroup*2032+byteOffset*8+(7-bit);
-        cout << inodeindex<< endl;
+        //cout << inodeindex<< endl;
         checkinodebitmap[inodeindex]=1;
 
       //  cout <<checkinodebitmap[inodeindex]<< endl;
@@ -184,15 +184,15 @@ int main(int  argc,  char* argv[]){
         }
         sort(inodesnumbers.begin(), inodesnumbers.end());
       //  printinodeNumber(inodesnumbers);
-        for (int i=0;i<2032*16;i++){
+    /*    for (int i=0;i<2032*16;i++){
           if (i%8==0  )cout << " ";
                                    if (i%2032==0  )cout << " "<< endl;
                      cout << checkinodebitmap[i]<<"";
 
-               }
+               }*/
 
-      //  printinodeNumber(blocknumbers);
-        //cout << "size "<<blocknumbers.size()<< " "<< super.s_blocks_count-super.s_free_blocks_count<< endl;
+       printinodeNumber(blocknumbers);
+        cout << "size "<<blocknumbers.size()<< " "<< super.s_blocks_count-super.s_free_blocks_count<< endl;
         //  printbitmaps(blockBitmaps,totalBlocks);
 
     //  printbitmaps(inodeBitmap,totalBlocks);
