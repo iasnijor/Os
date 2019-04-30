@@ -73,7 +73,7 @@ using namespace std;
   ssize_t VDIread(VDIFile *v,void *buff,ssize_t num){
     ssize_t nBytes= read(v->file,buff,num);
     if (num != nBytes){
-  //    cout <<"Error here ";
+      cout <<"Error here ";
       return 1;
     }
     return nBytes;
@@ -104,7 +104,7 @@ using namespace std;
     //Function to fetchBlock
     uint8_t* fetchBlock(VDIFile *f, unsigned int blockNum, uint8_t* buff, int location, unsigned int blockSize, std::vector<int> &Block){
       int num = (blockNum * blockSize) + location;
-    cout << blockNum <<" "<< Block.size()<< endl;
+    cout <<"Block encountered" << blockNum <<" "<< Block.size()<< endl;
       Block.push_back(blockNum);
       off_t offset=VDISeek(f, num , SEEK_SET);
       int block=VDIread(f, buff, blockSize);
@@ -166,7 +166,7 @@ using namespace std;
              groupDescriptor[i].used_dirs_count);
     }
     printf("\n");
-    cout <<"Number of existing directories: "<<usedDir <<endl;
+    cout <<dec<<"Number of existing directories: "<<usedDir <<endl;
   }
 
   //FUnction to fetch block from inode
@@ -227,21 +227,18 @@ using namespace std;
 
 
            if(type==1 ){fil.push_back(name);
-          /*   std::vector<int> in3;
-          //   in3= traverseinodes(f,super,groupDescriptor,filesystemstart,blockSize,dir,fil,entry->inode);
-            Inode i= fetchInode(f,entry->inode,super,groupDescriptor,blockSize,filesystemstart,Block);
-            if(S_ISREG(i.i_mode)){cout<<"Its a file."<<endl;
-            for (int j = 0 ; j <15;j++){
-              if(i.i_block[j]!=0){
-                cout <<dec<< "Block is used "<<j<< endl;
-              uint8_t* buf = new uint8_t[blockSize];
-               fetchBlockfromFile(f,&i,j,buf,blockSize,filesystemstart,Block);
-              x+=readDir(f,super,groupDescriptor,filesystemstart,blockSize,i.i_size,buf,in,dir,fil,Block);
-                      }
-                  }            // append null char to the file name
-            }*/
-          }
-
+             Inode i= fetchInode(f,entry->inode,super,groupDescriptor,blockSize,filesystemstart,Block);
+             if(entry->inode!=0){
+              for (int j = 0 ; j <15;j++){
+               if(i.i_block[j]!=0){
+                 cout <<dec<< "Block is used "<<j<< endl;
+               uint8_t* buf = new uint8_t[blockSize];
+                fetchBlockfromFile(f,&i,j,buf,blockSize,filesystemstart,Block);
+              // x+=readDir(f,super,groupDescriptor,filesystemstart,blockSize,i.i_size,buf,in,dir,fil,Block);
+                                          }
+                                }
+                             }
+                  }
 
            if(type==2 ){
            dir.push_back(name);
@@ -255,7 +252,7 @@ using namespace std;
                                 cout <<dec<< "Block is used "<<j<< endl;
                               uint8_t* buf = new uint8_t[blockSize];
                                fetchBlockfromFile(f,&i,j,buf,blockSize,filesystemstart,Block);
-                              x+=readDir(f,super,groupDescriptor,filesystemstart,blockSize,i.i_size,buf,in,dir,fil,Block);
+                            //  x+=readDir(f,super,groupDescriptor,filesystemstart,blockSize,i.i_size,buf,in,dir,fil,Block);
                                       }
                                 }
                               }
@@ -339,7 +336,7 @@ void compareGroupDes(group_descriptor g[],group_descriptor rhs[],unsigned int gr
 // Print a vector
     void printinodeNumber(vector<int> &v){
       for (int i=0; i<v.size();i++){
-        cout << v.at(i)<< endl;
+        cout << v.at(i)<<" ";
       }
     }
 
@@ -349,12 +346,6 @@ void compareGroupDes(group_descriptor g[],group_descriptor rhs[],unsigned int gr
         if (i%254==0)cout << " "<< endl;
 
         cout <<dec<< bitmap[i]<<" ";
-      }
-    }
-    void printbitmaps2(string bitmap1[],string bitmap2[], int totalBlocks){
-      for (int i=0;i<254*16;i++){
-        cout <<dec<< bitmap1[i]<< " "<< bitmap2[i]<< endl;
-        if (i%1024==0)cout << " "<< endl;
       }
     }
 
