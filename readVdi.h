@@ -282,8 +282,8 @@ using namespace std;
 
 //Function to compare and correct Superblock
  void compareSuperblock(Superblock super, Superblock rhs){
-   if (super.s_inodes_count!= rhs.s_inodes_count){cout << "Eroorin Superblock"<< endl;rhs.s_inodes_count=super.s_inodes_count;}
-   if (super.s_blocks_count !=rhs.s_blocks_count){rhs.s_blocks_count=super.s_blocks_count;}
+   if (super.s_inodes_count!= rhs.s_inodes_count){printf("ERROR IN SUPERBLOCK INDOES COUNT: %d \n CORRECTED TO: %d \n", rhs.s_inodes_count, super.s_inodes_count );rhs.s_inodes_count=super.s_inodes_count;}
+   if (super.s_blocks_count !=rhs.s_blocks_count){printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n", rhs.s_blocks_count, super.s_blocks_count );rhs.s_blocks_count=super.s_blocks_count;}
    if(super.s_r_blocks_count!=rhs.s_r_blocks_count){rhs.s_r_blocks_count=super.s_r_blocks_count;}
    if(super.s_free_blocks_count!=rhs.s_free_blocks_count){rhs.s_free_blocks_count=super.s_free_blocks_count;}
    if(super.s_free_inodes_count!=rhs.s_free_inodes_count){rhs.s_free_inodes_count=super.s_free_inodes_count;}

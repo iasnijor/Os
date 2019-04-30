@@ -194,29 +194,65 @@ int main(int  argc,  char* argv[]){
             compareGroupDes(groupDescriptor,g,groupCount);
 
           }
+        }*/
+        cout <<"SIZEEEE"<< size << endl;
+
+        // print the super block
+        printf("############# SUPERBLOCK #############\n");
+        printSuperBlock(super);
+
+        // print group descriptor table
+        printf("##################### GROUP DESCRIPTOR TABLLE ###################\n");
+        printBGDT(groupDescriptor,groupCount);
+
+        //STATS
+        printf("\n##################### GENERAL STATISTICS ###################\n");
+
+        // calculate total filesystem size
+        unsigned int fsSize = super.s_blocks_count * blockSize;
+        printf("Total size of Filesystem: %u bytes\n\n", fsSize);
+
+
+        // calculate free space
+        unsigned int fSpace = super.s_free_blocks_count * blockSize;
+        printf("Size available for files: %u bytes\n\n", fSpace);
+
+        // calculate used space
+        unsigned int uSpace = blockSize * (super.s_blocks_count - super.s_free_blocks_count);
+        printf("Used Space: %u bytes\n\n", uSpace );
+
+        // possible files and directories
+        printf("Number of possible files and directories: %d\n\n", super.s_inodes_count );
+
+        // number of files
+
+        // number of directories
+
+        //Block Size
+        printf("Block Size: %d bytes\n\n", blockSize );
+        //State of file system
+        printf("State of the Filesystem: ");
+        if (super.s_state==1){printf("CLEAN\n\n" );}
+        else if (super.s_state==2){printf("File has an error\n\n" );}
+        else printf("error reading super\n\n" );
+
+        printf("############### CHECKING FILESYSTEM #################\n\n");
+        //checking magic number
+        if(super.s_magic != 61267){
+          printf("INCORRECT MAGIC NUMBER\n" );
+        }
+        else {
+          cout << hex << "Magic number is correct: " << super.s_magic << endl << endl;;
+        }
+
+        // check superblock
+        for (int i = 0 ; i < groupCount;i++){
+          if (power357(i)|| i==0){
+            Superblock s1;
+            fetchBlock(f,super.s_blocks_per_group*i+1,(uint8_t*)&s1,filesystemstart,blockSize,blocknumbers);
+            compareSuperblock(super,s1);
           }
-          cout << "size "<<blocknumbers.size()<< " "<< super.s_blocks_count-super.s_free_blocks_count<< endl;
-
-          // calculate total filesystem size
-          unsigned int fsSize = super.s_blocks_count * blockSize;
-          printf("Total size of Filesystem: %u bytes\n", fsSize);
-
-          // calculate free space
-          unsigned int fSpace = super.s_free_blocks_count * blockSize;
-          printf("Size available for files: %u bytes\n", fSpace);
-
-          // calculate used used space
-          unsigned int uSpace = blockSize * (super.s_blocks_count - super.s_free_blocks_count);
-          printf("Used Space: %u bytes\n", uSpace );
-
-          //Block Size
-          cout << "Block Size:"<<dec<< blockSize<< " bytes"<< endl;
-          //State of file system
-          cout << "State of Filesystem: ";
-          if (super.s_state==1){cout << "Clean"<< endl;}
-          else if (super.s_state==2){cout << "FIle has error"<< endl;}
-          else cout << "Error reading Superblock"<< endl;
-
+        }
 
 
 }
