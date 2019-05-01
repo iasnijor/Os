@@ -79,6 +79,8 @@ int main(int  argc,  char* argv[]){
                     totalnumbers=readDir(f,super,groupDescriptor,filesystemstart,blockSize,i.i_size,buf3,inodesnumbers, directories,files,blocknumbers);
                 }
               }
+        uint8_t* fBlock2 = fetchBlock(f,0,buf3,filesystemstart,blockSize,blocknumbers);
+        fBlock2 = fetchBlock(f,1,buf3,filesystemstart,blockSize,blocknumbers);
 
             /*   Inode i2= fetchInode(f,7,super,groupDescriptor,blockSize,filesystemstart,blocknumbers);
                 for (int j = 0 ; j*blockSize <i.i_size;j++){
@@ -101,6 +103,7 @@ int main(int  argc,  char* argv[]){
                 for (int i = 0 ; i < groupCount;i++){
                 if (power357(i)|| i==0){
                   int locationGroup= (super.s_blocks_per_group*i+2)*blockSize+filesystemstart;
+                  uint8_t* fBlock1 = fetchBlock(f,super.s_blocks_per_group*i+2,buf3,filesystemstart,blockSize,blocknumbers);
                   int geb = readGroupDescriptor(f,locationGroup, g, groupCount);
                   compareGroupDes(groupDescriptor,g,groupCount);
 
