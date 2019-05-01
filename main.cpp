@@ -69,18 +69,43 @@ int main(int  argc,  char* argv[]){
           uint8_t* buf3 = new uint8_t[blockSize];
           vector<int> blocknumbers;
           vector<int> inodesnumbers;
-          Inode i= fetchInode(f,2,super,groupDescriptor,blockSize,filesystemstart,blocknumbers);
+          for (int j = 1; j<11;j++){
+          Inode i= fetchInode(f,j,super,groupDescriptor,blockSize,filesystemstart,blocknumbers);
           std::vector<string> directories;
           std::vector<string> files;
           int totalnumbers=0;
          for (int j = 0 ; j*blockSize <i.i_size;j++){
-          //  if(i.i_block[j]!=0){
-              cout << "main here " <<endl;
                     fetchBlockfromFile(f,&i,j,buf3,blockSize,filesystemstart,blocknumbers);
-                        cout << "main here " <<endl;
                     totalnumbers=readDir(f,super,groupDescriptor,filesystemstart,blockSize,i.i_size,buf3,inodesnumbers, directories,files,blocknumbers);
-                //  }
                 }
+              }
+
+            /*   Inode i2= fetchInode(f,7,super,groupDescriptor,blockSize,filesystemstart,blocknumbers);
+                for (int j = 0 ; j*blockSize <i.i_size;j++){
+                           fetchBlockfromFile(f,&i2,j,buf3,blockSize,filesystemstart,blocknumbers);
+                           totalnumbers=readDir(f,super,groupDescriptor,filesystemstart,blockSize,i.i_size,buf3,inodesnumbers, directories,files,blocknumbers);
+
+                       }*/
+
+                //Comparing and Correcting Superblock;
+                for (int i = 0 ; i < groupCount;i++){
+                if (power357(i)|| i==0){
+                  Superblock s1;
+                  fetchBlock(f,super.s_blocks_per_group*i+1,(uint8_t*)&s1,filesystemstart,blockSize,blocknumbers);
+                  compareSuperblock(super,s1);
+                }
+                }
+
+                //Comparing and Correcting group_descriptor;
+                group_descriptor g[groupCount];
+                for (int i = 0 ; i < groupCount;i++){
+                if (power357(i)|| i==0){
+                  int locationGroup= (super.s_blocks_per_group*i+2)*blockSize+filesystemstart;
+                  int geb = readGroupDescriptor(f,locationGroup, g, groupCount);
+                  compareGroupDes(groupDescriptor,g,groupCount);
+
+                }
+              }
 
             //INode bitmap reading and processing and checks
 
@@ -127,26 +152,28 @@ int main(int  argc,  char* argv[]){
           }
           if (inodematch==32512)
           cout << "InodeBitmaps matched with InodeBitmpas reported by Group Descriptor"<<endl;
-
+          //Fetching Inode table
+          uint8_t* ibit = new uint8_t[blockSize];
           for (int i=0; i < groupCount;i++){
-                uint8_t* bit = new uint8_t[blockSize];
-                uint8_t* fBlock1 = fetchBlock(f,groupDescriptor[i].inode_table,bit,filesystemstart,blockSize,blocknumbers);
+                uint8_t* fBlock1 = fetchBlock(f,groupDescriptor[i].inode_table,ibit,filesystemstart,blockSize,blocknumbers);
       }
+
+          //Processing block blockBitmaps
           int bnum=0;
-          int blockBitmaps[770*groupCount];
-          for (int i=0; i < groupCount;i++){
           uint8_t* bit = new uint8_t[blockSize];
+          int blockBitmaps[blockSize*groupCount];
+          for (int i=0; i < groupCount;i++){
           uint8_t* fBlock1 = fetchBlock(f,groupDescriptor[i].block_bitmap,bit,filesystemstart,blockSize,blocknumbers);
-          for (int j= 0; j <770; j++)
+          for (int j= 0; j <blockSize; j++)
           {
-            int val=(int)bit[j+254];
+            int val=(int)bit[j];
             if (val>0)bnum++;
-            blockBitmaps[i*770+j]=val;
+            blockBitmaps[i*blockSize+j]=val;
           }
           }
         //  cout << "NOof blocks "<< bnum << endl;
-          int bitmapblock[6160*groupCount];
-          for (int i =0; i < 770*groupCount;i++){
+          int bitmapblock[super.s_blocks_per_group*groupCount];
+          for (int i =0; i < blockSize*groupCount;i++){
           int val = blockBitmaps[i];
           int *bits = new int [sizeof(int) *8];
           for(int k=0; k<8; k++){
@@ -156,40 +183,42 @@ int main(int  argc,  char* argv[]){
             bitmapblock[i*8+(7-k)] = thebit;
           }
           }
-
-          /*  for (int i=0;i<6160*16;i++){
+          int check=0;
+          for (int i =0;i< super.s_blocks_per_group*groupCount;i++){
+            if (bitmapblock[i]==1)check++;
+          }
+          sort( blocknumbers.begin(),blocknumbers.end() );
+          blocknumbers.erase( unique( blocknumbers.begin(), blocknumbers.end() ), blocknumbers.end() );
+        int checkblockbitmap[blockSize*groupCount];
+          for (int i = 0 ; i <super.s_inodes_per_group*groupCount;i++){checkinodebitmap[i]=0;}
+        //  for (int i = 1 ; i <11;i++){inodesnumbers.push_back(i);}
+          for (int i = 0 ; i <blocknumbers.size();i++){
+            unsigned int blockNum=blocknumbers.at(i);
+              unsigned int blockGroup=blockNum/super.s_blocks_per_group;
+            unsigned int index=blockNum%super.s_blocks_per_group;
+            unsigned int byteOffset=index/8;
+            unsigned int bit=index%8;
+            int blockindex= blockGroup*super.s_blocks_per_group+byteOffset*8+(7-bit);
+            checkblockbitmap[blockindex]=1;
+          }
+      /*  for (int i=0;i<8192*16;i++){
           if (i%8==0  )cout << " ";
           if (i%1024==0  )cout << " "<< endl;
-          cout <<dec<< bitmapblock[i]<<"";
-          }
+          if (i%8192==0){cout << "group starts "<< endl;}
+          cout <<dec<< checkblockbitmap[i]<<"";
+        }*/
 
-          /*for (int i = 0 ;i <770*groupCount;i++){cout << blockBitmaps[i]<<" ";
-          if (i%770==0)cout << ""<<endl;}
-          cout << "number of entries " << bnum<< endl;
+        int blockmatch=0;
+        for (int i=0;i<super.s_blocks_per_group*groupCount;i++){
+                    if (bitmapblock[i]==checkblockbitmap[i]){blockmatch++;}
 
-              */
-
-          //Comparing and Correcting Superblock;
-          for (int i = 0 ; i < groupCount;i++){
-          if (power357(i)|| i==0){
-            Superblock s1;
-            fetchBlock(f,super.s_blocks_per_group*i+1,(uint8_t*)&s1,filesystemstart,blockSize,blocknumbers);
-            compareSuperblock(super,s1);
-          }
-          }
-
-          //Comparing and Correcting group_descriptor;
-          group_descriptor g[groupCount];
-          for (int i = 0 ; i < groupCount;i++){
-          if (power357(i)|| i==0){
-            int locationGroup= (super.s_blocks_per_group*i+2)*blockSize+filesystemstart;
-            int geb = readGroupDescriptor(f,locationGroup, g, groupCount);
-            compareGroupDes(groupDescriptor,g,groupCount);
-
-          }
         }
-        cout <<"SIZEEEE"<< size << endl;
+        uint8_t* fBlock1 = fetchBlock(f,groupDescriptor[0].block_bitmap,bit,filesystemstart,blockSize,blocknumbers);
 
+        cout << "Number of bitmapblock matched: "<< blockmatch<< " "<< check<< endl;
+
+
+        cout <<"SIZEEEE"<< size << endl;
         if (inodematch==32512)
         cout << "InodeBitmaps matched with InodeBitmpas reported by Group Descriptor"<<endl;
 
