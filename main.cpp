@@ -51,9 +51,6 @@ int main(int  argc,  char* argv[]){
 
           // Debug code to make sure we are reading the superBlock
           cout <<hex<<"Absolute Sector Number "<< b.Partition[0].abssector<< endl <<"Number sector " <<  b.Partition[0].numsector<< endl;
-          if (super.s_state==1){cout << "FIle is clean"<< endl;}
-          else if (super.s_state==2){cout << "FIle has error"<< endl;}
-          else cout << "Error reading Superblock"<< endl;
 
           //Reading Group Descriptor Table
           unsigned int groupCount = (super.s_blocks_count - super.s_first_data_block) / super.s_blocks_per_group;
@@ -67,26 +64,22 @@ int main(int  argc,  char* argv[]){
           int groupdes_loc = superblock_loc+blockSize;
           int gb = readGroupDescriptor(f,groupdes_loc, groupDescriptor, groupCount);
 
-          // print super block
-          printSuperBlock(super);
-
-          // print group descriptor table
-          printBGDT(groupDescriptor,groupCount);
 
 
-
+          uint8_t* buf3 = new uint8_t[blockSize];
           vector<int> blocknumbers;
           vector<int> inodesnumbers;
           Inode i= fetchInode(f,2,super,groupDescriptor,blockSize,filesystemstart,blocknumbers);
           std::vector<string> directories;
           std::vector<string> files;
           int totalnumbers=0;
-          for (int j=0; j<15;j++){
-                  if(i.i_block[j]!=0){
-                    uint8_t* buf3 = new uint8_t[blockSize];
+         for (int j = 0 ; j*blockSize <i.i_size;j++){
+          //  if(i.i_block[j]!=0){
+              cout << "main here " <<endl;
                     fetchBlockfromFile(f,&i,j,buf3,blockSize,filesystemstart,blocknumbers);
+                        cout << "main here " <<endl;
                     totalnumbers=readDir(f,super,groupDescriptor,filesystemstart,blockSize,i.i_size,buf3,inodesnumbers, directories,files,blocknumbers);
-                  }
+                //  }
                 }
 
             //INode bitmap reading and processing and checks
@@ -133,7 +126,7 @@ int main(int  argc,  char* argv[]){
 
           }
           if (inodematch==32512)
-          cout << "##################InodeBitmaps matched with InodeBitmpas reported by Group Descriptor################# " << endl;
+          cout << "InodeBitmaps matched with InodeBitmpas reported by Group Descriptor"<<endl;
 
           for (int i=0; i < groupCount;i++){
                 uint8_t* bit = new uint8_t[blockSize];
@@ -151,7 +144,7 @@ int main(int  argc,  char* argv[]){
             blockBitmaps[i*770+j]=val;
           }
           }
-          cout << "NOof blocks "<< bnum << endl;
+        //  cout << "NOof blocks "<< bnum << endl;
           int bitmapblock[6160*groupCount];
           for (int i =0; i < 770*groupCount;i++){
           int val = blockBitmaps[i];
@@ -194,8 +187,11 @@ int main(int  argc,  char* argv[]){
             compareGroupDes(groupDescriptor,g,groupCount);
 
           }
-        }*/
+        }
         cout <<"SIZEEEE"<< size << endl;
+
+        if (inodematch==32512)
+        cout << "InodeBitmaps matched with InodeBitmpas reported by Group Descriptor"<<endl;
 
         // print the super block
         printf("############# SUPERBLOCK #############\n");
@@ -245,14 +241,7 @@ int main(int  argc,  char* argv[]){
           cout << hex << "Magic number is correct: " << super.s_magic << endl << endl;;
         }
 
-        // check superblock
-        for (int i = 0 ; i < groupCount;i++){
-          if (power357(i)|| i==0){
-            Superblock s1;
-            fetchBlock(f,super.s_blocks_per_group*i+1,(uint8_t*)&s1,filesystemstart,blockSize,blocknumbers);
-            compareSuperblock(super,s1);
-          }
-        }
-
-
+          cout << "Block per group "<<dec << super.s_blocks_per_group<< endl;
+          cout << "Frags per group "<<dec << super.s_frags_per_group<< endl;
+          cout << "Inodes Per Group "<< dec<< super.s_inodes_per_group << endl;
 }
