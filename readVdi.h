@@ -104,7 +104,7 @@ using namespace std;
     //Function to fetchBlock
     uint8_t* fetchBlock(VDIFile *f, unsigned int blockNum, uint8_t* buff, int location, unsigned int blockSize, std::vector<int> &Block){
       int num = (blockNum * blockSize) + location;
-   cout <<"Block encountered " <<dec<< blockNum <<" "<< Block.size()<< endl;
+  // cout <<"Block encountered " <<dec<< blockNum <<" "<< Block.size()<< endl;
     Block.push_back(blockNum);
       off_t offset=VDISeek(f, num , SEEK_SET);
       int block=VDIread(f, buff, blockSize);
@@ -172,7 +172,8 @@ using namespace std;
 
   //FUnction to fetch block from inode
   void fetchBlockfromFile(VDIFile*f,Inode *i, int inodeBlockNum, uint8_t *buff,unsigned int blockSize, int filesystemstart,std::vector<int> &Block ){
-      unsigned* list;
+
+        unsigned* list;
         unsigned int ipb=blockSize/4;
        if (inodeBlockNum <12){
        list =i->i_block;
@@ -209,37 +210,41 @@ using namespace std;
          fetchBlock(f,list[inodeBlockNum],buff,filesystemstart,blockSize,Block);
                 }
  }
-       int readDir(VDIFile *,Superblock,group_descriptor *,int ,int ,int ,uint8_t *,vector<int> & ,vector<string> &,vector<string> &,vector<int> &);
+
+       void readDir(VDIFile *,Superblock,group_descriptor *,int ,int ,int ,uint8_t *,vector<int> & ,vector<string> &,vector<string> &,vector<int> &);
 
        void traverseiblocks(VDIFile *f,Superblock super,group_descriptor *groupDescriptor,int filesystemstart,int blockSize,std::vector<int> &Block,Inode i,uint8_t* buf,std::vector<string> &dir,std::vector<string> &fil,std::vector<int> &in){
+         uint8_t* buf3 = new uint8_t[blockSize];
+
              for (unsigned int j = 0 ; blockSize*j<i.i_size;j++){
-               cout <<dec<< "Block is used "<<j<< endl;
+            //   cout <<dec<< "Block is used "<<j<< endl;
            fetchBlockfromFile(f,&i,j,buf,blockSize,filesystemstart,Block);
            if(S_ISDIR(i.i_mode)){
              readDir(f,super,groupDescriptor,filesystemstart,blockSize,i.i_size,buf,in,dir,fil,Block);
            }
+          //  fetchBlock(f,i.i_block[j],buf3,filesystemstart,blockSize,Block);
+
        }
      }
 
 
 
                 //FUnction to read  and traverse Directory
-                int readDir(VDIFile *f,Superblock super, group_descriptor *groupDescriptor,int filesystemstart,
+                void readDir(VDIFile *f,Superblock super, group_descriptor *groupDescriptor,int filesystemstart,
                   int blockSize, int inodeSize, uint8_t *buff, vector<int> &in ,
                   vector<string> &dir,vector<string> &fil,vector<int> &Block){
                     dirEntry *entry;
                     unsigned int cursor=24;
-                    int i=0,x=0;
                     entry=(dirEntry *)(buff+cursor);
                      int rec=entry->rec_len;
-                    while(cursor < inodeSize  && entry->inode !=0) {
+                    while(cursor < inodeSize ) {
                     char file_name[256];
                     memcpy(file_name, entry->name, entry->name_len);
                     file_name[entry->name_len] = '\0';
                     int type=(int)entry->file_type;
                     string name = (string)entry->name;
                     uint8_t *buf= new uint8_t[blockSize];
-                    printf("Inode,%10u %s\n", entry->inode, file_name);
+              //      printf("Inode,%10u %s\n", entry->inode, file_name);
                     if(type==1 ){fil.push_back(name);
                       Inode i= fetchInode(f,entry->inode,super,groupDescriptor,blockSize,filesystemstart,Block);
                       if(entry->inode!=0){
@@ -251,19 +256,13 @@ using namespace std;
                     if(name!="lost+found"){
                     std::vector<int> in3;
                    Inode i= fetchInode(f,entry->inode,super,groupDescriptor,blockSize,filesystemstart,Block);
-                    if(S_ISDIR(i.i_mode)){
                           traverseiblocks(f,super,groupDescriptor,filesystemstart,blockSize,Block,i,buf,dir,fil,in);
                                                  }
                                                }
-                                     }
-                    in.push_back(entry->inode);
-                    i++;
+                  in.push_back(entry->inode);
                     cursor+= entry->rec_len;
                     entry=(dirEntry *)(buff+cursor);
-
-                }
-                  return i+x;
-
+              }
                 }
 
 
