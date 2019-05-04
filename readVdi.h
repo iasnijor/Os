@@ -172,7 +172,6 @@ using namespace std;
 
   //FUnction to fetch block from inode
   void fetchBlockfromFile(VDIFile*f,Inode *i, int inodeBlockNum, uint8_t *buff,unsigned int blockSize, int filesystemstart,std::vector<int> &Block ){
-
         unsigned* list;
         unsigned int ipb=blockSize/4;
        if (inodeBlockNum <12){
@@ -253,11 +252,20 @@ using namespace std;
                                          }
                     if(type==2 ){
                     dir.push_back(name);
-                    if(name!="lost+found"){
+                    if (name=="lost+found"){cout << "lost+found "<< entry->inode<< " " << endl;
+                    Inode i= fetchInode(f,entry->inode,super,groupDescriptor,blockSize,filesystemstart,Block);
+                    for (int j=0;j<15;j++){
+                      if(i.i_block[j]!=0){
+                      uint8_t*   fBlock2 = fetchBlock(f,i.i_block[j],buf,filesystemstart,blockSize,Block);
+                    }
+                    }
+                  }
+                    if (name !="lost+found") {
+
                     std::vector<int> in3;
                    Inode i= fetchInode(f,entry->inode,super,groupDescriptor,blockSize,filesystemstart,Block);
                           traverseiblocks(f,super,groupDescriptor,filesystemstart,blockSize,Block,i,buf,dir,fil,in);
-                                                 }
+                          }
                                                }
                   in.push_back(entry->inode);
                     cursor+= entry->rec_len;
@@ -322,7 +330,7 @@ void compareGroupDes(group_descriptor g[],group_descriptor rhs[],unsigned int gr
 // Print a vector
     void printinodeNumber(vector<int> &v){
       for (int i=0; i<v.size();i++){
-        cout << v.at(i)<<" ";
+        cout << v.at(i)<<" "<< endl;
       }
     }
 
