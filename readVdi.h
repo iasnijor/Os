@@ -79,6 +79,15 @@ using namespace std;
     return nBytes;
     v->cursor= v->header.offsetdata;
   }
+  //Mimics UNIX write function
+  ssize_t VDIwrite(VDIFile *v,void *buff,ssize_t num){
+    ssize_t nBytes= write(v->file,buff,num);
+    if (num != nBytes){
+      cout <<"Error here ";
+      return 1;
+    }
+    return nBytes;
+  }
 
 
   // reads MBR
@@ -212,18 +221,16 @@ using namespace std;
 
        void readDir(VDIFile *,Superblock,group_descriptor *,int ,int ,int ,uint8_t *,vector<int> & ,vector<string> &,vector<string> &,vector<int> &);
 
+
+        //Function to travrse thorugh each iblocks
        void traverseiblocks(VDIFile *f,Superblock super,group_descriptor *groupDescriptor,int filesystemstart,int blockSize,std::vector<int> &Block,Inode i,uint8_t* buf,std::vector<string> &dir,std::vector<string> &fil,std::vector<int> &in){
          uint8_t* buf3 = new uint8_t[blockSize];
-
              for (unsigned int j = 0 ; blockSize*j<i.i_size;j++){
-            //   cout <<dec<< "Block is used "<<j<< endl;
            fetchBlockfromFile(f,&i,j,buf,blockSize,filesystemstart,Block);
            if(S_ISDIR(i.i_mode)){
              readDir(f,super,groupDescriptor,filesystemstart,blockSize,i.i_size,buf,in,dir,fil,Block);
            }
-          //  fetchBlock(f,i.i_block[j],buf3,filesystemstart,blockSize,Block);
-
-       }
+         }
      }
 
 
@@ -243,7 +250,6 @@ using namespace std;
                     int type=(int)entry->file_type;
                     string name = (string)entry->name;
                     uint8_t *buf= new uint8_t[blockSize];
-              //      printf("Inode,%10u %s\n", entry->inode, file_name);
                     if(type==1 ){fil.push_back(name);
                       Inode i= fetchInode(f,entry->inode,super,groupDescriptor,blockSize,filesystemstart,Block);
                       if(entry->inode!=0){
@@ -252,7 +258,7 @@ using namespace std;
                                          }
                     if(type==2 ){
                     dir.push_back(name);
-                    if (name=="lost+found"){cout << "lost+found "<< entry->inode<< " " << endl;
+                    if (name=="lost+found"){
                     Inode i= fetchInode(f,entry->inode,super,groupDescriptor,blockSize,filesystemstart,Block);
                     for (int j=0;j<15;j++){
                       if(i.i_block[j]!=0){
@@ -275,48 +281,76 @@ using namespace std;
 
 
 //Function to compare and correct Superblock
- void compareSuperblock(Superblock super, Superblock rhs){
-   if (super.s_inodes_count!= rhs.s_inodes_count){printf("ERROR IN SUPERBLOCK INDOES COUNT: %d \n CORRECTED TO: %d \n", rhs.s_inodes_count, super.s_inodes_count );rhs.s_inodes_count=super.s_inodes_count;}
-   if (super.s_blocks_count !=rhs.s_blocks_count){printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n", rhs.s_blocks_count, super.s_blocks_count );rhs.s_blocks_count=super.s_blocks_count;}
-   if(super.s_r_blocks_count!=rhs.s_r_blocks_count){rhs.s_r_blocks_count=super.s_r_blocks_count;}
-   if(super.s_free_blocks_count!=rhs.s_free_blocks_count){rhs.s_free_blocks_count=super.s_free_blocks_count;}
-   if(super.s_free_inodes_count!=rhs.s_free_inodes_count){rhs.s_free_inodes_count=super.s_free_inodes_count;}
-   if(super.s_first_data_block!=rhs.s_first_data_block){rhs.s_first_data_block=super.s_first_data_block;}
-   if(super.s_log_block_size!=rhs.s_log_block_size){rhs.s_log_block_size=super.s_log_block_size;}
-   if(super.s_log_frag_size!=rhs.s_log_frag_size){rhs.s_log_frag_size=super.s_log_frag_size;}
-   if(super.s_blocks_per_group!=rhs.s_blocks_per_group){rhs.s_blocks_per_group=super.s_blocks_per_group;}
-   if(super.s_frags_per_group!=rhs.s_frags_per_group){rhs.s_frags_per_group=super.s_frags_per_group;}
-   if(super.s_inodes_per_group!=rhs.s_inodes_per_group){rhs.s_inodes_per_group=super.s_inodes_per_group;}
-   if(super.s_mtime!=rhs.s_mtime){rhs.s_mtime=super.s_mtime;}
-   if(super.s_wtime!=rhs.s_wtime){rhs.s_wtime=super.s_wtime;}
-   if(super.s_mnt_count!=rhs.s_mnt_count){rhs.s_mnt_count=super.s_mnt_count;}
-   if(super.s_max_mnt_count!=rhs.s_max_mnt_count){rhs.s_max_mnt_count=super.s_max_mnt_count;}
-   if(super.s_magic!=rhs.s_magic){rhs.s_magic=super.s_magic;}
-   if(super.s_state!=rhs.s_state){rhs.s_state=super.s_state;}
-   if(super.s_errors=rhs.s_errors){rhs.s_errors=super.s_errors;}
-   if(super.s_minor_rev_level!=rhs.s_minor_rev_level){rhs.s_minor_rev_level=super.s_minor_rev_level;}
-   if(super.s_lastcheck!=rhs.s_lastcheck){rhs.s_lastcheck=super.s_lastcheck;}
-   if(super.s_checkinterval!=rhs.s_checkinterval){rhs.s_checkinterval=super.s_checkinterval;}
-   if(super.s_creator_os!=rhs.s_creator_os){rhs.s_creator_os=super.s_creator_os;}
-   if(super.s_rev_level!=rhs.s_rev_level){rhs.s_rev_level=super.s_rev_level;}
-   if(super.s_def_resgid!=rhs.s_def_resgid){rhs.s_def_resgid=super.s_def_resgid;}
-   if(super.s_def_resuid!=rhs.s_def_resuid){rhs.s_def_resuid=super.s_def_resuid;}
-   if(super.s_first_ino!=rhs.s_first_ino){rhs.s_first_ino=super.s_first_ino;}
-   if(super.s_inode_size!=rhs.s_inode_size){rhs.s_inode_size=super.s_inode_size;}
-   if(super.s_block_group_nr!=rhs.s_block_group_nr){rhs.s_block_group_nr=super.s_block_group_nr;}
+ bool compareSuperblock(Superblock super, Superblock rhs){
+   if (super.s_inodes_count!= rhs.s_inodes_count){return false;
+     printf("ERROR IN SUPERBLOCK INDOES COUNT: %d \n CORRECTED TO: %d \n", rhs.s_inodes_count, super.s_inodes_count );}
+   if (super.s_blocks_count !=rhs.s_blocks_count){return false;
+     printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n", rhs.s_blocks_count, super.s_blocks_count );}
+   if(super.s_r_blocks_count!=rhs.s_r_blocks_count){return false;
+     printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n",rhs.s_r_blocks_count,super.s_r_blocks_count );}
+   if(super.s_free_blocks_count!=rhs.s_free_blocks_count){return false;
+     printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n", rhs.s_free_blocks_count,super.s_free_blocks_count);}
+   if(super.s_free_inodes_count!=rhs.s_free_inodes_count){return false;
+      printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n",rhs.s_free_inodes_count,super.s_free_inodes_count);}
+   if(super.s_first_data_block!=rhs.s_first_data_block){return false;
+      printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n",rhs.s_first_data_block,super.s_first_data_block);}
+   if(super.s_log_block_size!=rhs.s_log_block_size){return false;
+      printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n",rhs.s_log_block_size,super.s_log_block_size);}
+   if(super.s_log_frag_size!=rhs.s_log_frag_size){return false;
+      printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n",rhs.s_log_frag_size,super.s_log_frag_size);}
+   if(super.s_blocks_per_group!=rhs.s_blocks_per_group){return false;
+      printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n",rhs.s_blocks_per_group,super.s_blocks_per_group);}
+   if(super.s_frags_per_group!=rhs.s_frags_per_group){return false;
+      printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n",rhs.s_frags_per_group,super.s_frags_per_group);}
+   if(super.s_inodes_per_group!=rhs.s_inodes_per_group){return false;
+      printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n",rhs.s_inodes_per_group,super.s_inodes_per_group);}
+   if(super.s_mtime!=rhs.s_mtime){return false;
+      printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n",rhs.s_mtime,super.s_mtime);}
+   if(super.s_wtime!=rhs.s_wtime){return false;
+      printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n",rhs.s_wtime,super.s_wtime);}
+   if(super.s_mnt_count!=rhs.s_mnt_count){return false;
+      printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n",rhs.s_mnt_count,super.s_mnt_count);}
+   if(super.s_max_mnt_count!=rhs.s_max_mnt_count){return false;
+      printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n",rhs.s_max_mnt_count,super.s_max_mnt_count);}
+   if(super.s_magic!=rhs.s_magic){return false;
+      printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n",rhs.s_magic,super.s_magic);}
+   if(super.s_state!=rhs.s_state){return false;
+      printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n",rhs.s_state,super.s_state);}
+   if(super.s_errors=rhs.s_errors){return false;
+      printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n",rhs.s_errors,super.s_errors);}
+   if(super.s_minor_rev_level!=rhs.s_minor_rev_level){return false;
+      printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n",rhs.s_minor_rev_level,super.s_minor_rev_level);}
+   if(super.s_lastcheck!=rhs.s_lastcheck){return false;
+      printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n",rhs.s_lastcheck,super.s_lastcheck);}
+   if(super.s_checkinterval!=rhs.s_checkinterval){return false;
+      printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n",rhs.s_checkinterval,super.s_checkinterval);}
+   if(super.s_creator_os!=rhs.s_creator_os){return false;
+      printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n",rhs.s_creator_os,super.s_creator_os);}
+   if(super.s_rev_level!=rhs.s_rev_level){return false;
+      printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n",rhs.s_rev_level,super.s_rev_level);}
+   if(super.s_def_resgid!=rhs.s_def_resgid){return false;
+      printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n",rhs.s_def_resgid,super.s_def_resgid);}
+   if(super.s_def_resuid!=rhs.s_def_resuid){return false;
+      printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n",rhs.s_def_resuid,super.s_def_resuid);}
+   if(super.s_first_ino!=rhs.s_first_ino){return false;
+      printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n",rhs.s_first_ino,super.s_first_ino);}
+   if(super.s_inode_size!=rhs.s_inode_size){return false;
+      printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n",rhs.s_inode_size,super.s_inode_size);}
+   if(super.s_block_group_nr!=rhs.s_block_group_nr){return false;
+      printf("ERROR IN SUPERBLOCK BLOCK COUNT: %d \n CORRECTED TO: %d \n",rhs.s_block_group_nr,super.s_block_group_nr);}
 
  }
 
  //Function to compare and correct groupDescriptor
-void compareGroupDes(group_descriptor g[],group_descriptor rhs[],unsigned int groupCount){
+bool compareGroupDes(group_descriptor g[],group_descriptor rhs[],unsigned int groupCount){
   for (int i =0 ; i < groupCount; i++ ){
-    if(g[i].block_bitmap!= rhs[i].block_bitmap){cout <<"Error block_bitmap "<<i<< endl;rhs[i].block_bitmap=g[i].block_bitmap;}
-    if(g[i].inode_bitmap!= rhs[i].inode_bitmap){cout <<"Error inode_bitmap "<<i<< endl;rhs[i].inode_bitmap=g[i].inode_bitmap;}
-    if(g[i].inode_table!= rhs[i].inode_table){cout <<"Error inode_table "<<i<< endl;rhs[i].inode_table=g[i].inode_table;}
-    if(g[i].free_blocks_count!=rhs[i].free_blocks_count){cout <<"Error free_blocks_count "<<i<< endl;rhs[i].free_blocks_count=g[i].free_blocks_count;}
-    if(g[i].free_inodes_count!= rhs[i].free_inodes_count){cout <<"Error free_inodes_count "<<i<< endl;rhs[i].free_inodes_count=g[i].free_inodes_count;}
-    if(g[i].used_dirs_count!= rhs[i].used_dirs_count){cout <<"Error used_dirs_count "<<i<< endl;rhs[i].used_dirs_count=g[i].used_dirs_count;}
-    if(g[i].pad!= rhs[i].pad){cout << "Erro pad"<< endl;rhs[i].pad=g[i].pad;}
+    if(g[i].block_bitmap!= rhs[i].block_bitmap){return false;cout <<"Error block_bitmap "<<i<< endl;}
+    if(g[i].inode_bitmap!= rhs[i].inode_bitmap){return false;cout <<"Error inode_bitmap "<<i<< endl;}
+    if(g[i].inode_table!= rhs[i].inode_table){return false;cout <<"Error inode_table "<<i<< endl;}
+    if(g[i].free_blocks_count!=rhs[i].free_blocks_count){return false;cout <<"Error free_blocks_count "<<i<< endl;}
+    if(g[i].free_inodes_count!= rhs[i].free_inodes_count){return false;cout <<"Error free_inodes_count "<<i<< endl;}
+    if(g[i].used_dirs_count!= rhs[i].used_dirs_count){cout <<"Error used_dirs_count "<<i<< endl;}
+    if(g[i].pad!= rhs[i].pad){return false;cout << "Erro pad"<< endl;}
       }
     }
 
@@ -330,15 +364,16 @@ void compareGroupDes(group_descriptor g[],group_descriptor rhs[],unsigned int gr
 // Print a vector
     void printinodeNumber(vector<int> &v){
       for (int i=0; i<v.size();i++){
-        cout << v.at(i)<<" "<< endl;
+        if(i%1024==0)cout << ""<< endl;
+        cout << v.at(i)<<" ";
       }
     }
 
 //Print bitmaps
     void printbitmaps(int bitmap[], int totalBlocks){
-      for (int i=0;i<254*16;i++){
-        if (i%254==0)cout << " "<< endl;
-
+      for (int i=0;i<totalBlocks;i++){
+        if (i%8192==0)cout << " "<< endl;
+        if(i%8==0)cout << " "<< endl;
         cout <<dec<< bitmap[i]<<" ";
       }
     }
