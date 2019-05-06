@@ -219,10 +219,6 @@ int main(int  argc,  char* argv[]){
         printf("############# SUPERBLOCK #############\n");
         printSuperBlock(super);
 
-        // print group descriptor table
-        printf("##################### GROUP DESCRIPTOR TABLLE ###################\n");
-        printBGDT(groupDescriptor,groupCount);
-
         //STATS
         printf("\n##################### GENERAL STATISTICS ###################\n");
 
@@ -262,9 +258,14 @@ int main(int  argc,  char* argv[]){
         printf("Number of files: %d\n\n", fileNodes );
 
         // number of blockGroups && groupDescriptor
-        
+        cout << dec << "Number of block groups: " << groupCount << endl << endl;
+
+        printf("****************** GROUP DESCRIPTOR TABLLE *********************\n");
+        printBGDT(groupDescriptor,groupCount);
+
+
         //Block Size
-        printf("Block Size: %d bytes\n\n", blockSize );
+        printf("\nBlock Size: %d bytes\n\n", blockSize );
         //State of file system
         printf("State of the Filesystem: ");
         if (super.s_state==1){printf("CLEAN\n\n" );}
