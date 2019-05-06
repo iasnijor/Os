@@ -73,6 +73,7 @@ int main(int  argc,  char* argv[]){
           vector<int> inodesnumbers;
           std::vector<string> directories;
           std::vector<string> files;
+          directories.push_back("root");
           int totalnumbers=0;
         for (int k = 1; k<super.s_first_ino;k++){
           Inode i= fetchInode(f,k,super,groupDescriptor,blockSize,filesystemstart,blocknumbers);
@@ -225,7 +226,7 @@ int main(int  argc,  char* argv[]){
 
         }
         if(blockmatch==totalblocks){
-        cout << "ALL Blocks  arre macthed"<< endl;}
+        cout << "ALL Block Bitmaps  are macthed with the bitmap reported by group descriptor bitmaps."<< endl;}
         // print the super block
         printf("############# SUPERBLOCK #############\n");
         printSuperBlock(super);
@@ -253,9 +254,17 @@ int main(int  argc,  char* argv[]){
         // possible files and directories
         printf("Number of possible files and directories: %d\n\n", super.s_inodes_count );
 
-        // number of files
 
         // number of directories
+        int ndirec=0;
+        int ndirectories=directories.size();
+        printf("Number of  directories found: %d\n\n", ndirectories);
+        for(int i=0;i<groupCount;i++){ndirec+=groupDescriptor[i].used_dirs_count;}
+        printf("Number of  directories : %d\n\n", ndirec );
+
+        // number of files
+        int nsize=files.size();
+        printf("Number of files: %d\n\n", nsize );
 
         //Block Size
         printf("Block Size: %d bytes\n\n", blockSize );
