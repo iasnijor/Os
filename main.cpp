@@ -58,7 +58,6 @@ int main(int  argc,  char* argv[]){
           if(remainder > 0){
             groupCount++;
           }
-          cout << "Group count: "<<dec << groupCount << endl;
           unsigned int blockSize = 1024 << super.s_log_block_size;
           group_descriptor groupDescriptor[groupCount];
           int groupdes_loc = superblock_loc+blockSize;
@@ -158,13 +157,7 @@ int main(int  argc,  char* argv[]){
             int inodeindex= blockGroup*super.s_inodes_per_group+byteOffset*8+(7-bit);
             checkinodebitmap[inodeindex]=1;
           }
-          int inodematch=0;
-          for (int i=0;i<super.s_inodes_per_group*groupCount;i++){
-                      if (bitmapinode[i]==checkinodebitmap[i]){inodematch++;}
 
-          }
-          if (inodematch==32512)
-          cout << "InodeBitmaps matched with InodeBitmpas reported by Group Descriptor"<<endl;
 
           //Processing block blockBitmaps
           int blockBitmaps[blockSize*groupCount];
@@ -214,21 +207,9 @@ int main(int  argc,  char* argv[]){
             checkblockbitmap[blockindex]=1;
           }
 
-
-       int blockmatch=0;
-        for (int i=0;i<totalblocks;i++){
-                    if (bitmapblock[i]==checkblockbitmap[i]){blockmatch++;}
-
-        }
-        if(blockmatch==totalblocks){
-        cout << "ALL Block Bitmaps  are macthed with the bitmap reported by group descriptor bitmaps."<< endl;}
         // print the super block
         printf("############# SUPERBLOCK #############\n");
         printSuperBlock(super);
-
-        // print group descriptor table
-        printf("##################### GROUP DESCRIPTOR TABLLE ###################\n");
-        printBGDT(groupDescriptor,groupCount);
 
         //STATS
         printf("\n##################### GENERAL STATISTICS ###################\n");
@@ -251,18 +232,27 @@ int main(int  argc,  char* argv[]){
 
 
         // number of directories
-        int ndirec=0;
-        int ndirectories=directories.size();
-        printf("Number of  directories found: %d\n\n", ndirectories);
+         int ndirec = 0;
         for(int i=0;i<groupCount;i++){ndirec+=groupDescriptor[i].used_dirs_count;}
         printf("Number of  directories : %d\n\n", ndirec );
 
         // number of files
-        int nsize=files.size();
-        printf("Number of files: %d\n\n", nsize );
+
+        unsigned int fileNodes = super.s_inodes_count - super.s_free_inodes_count;
+        // - 9 because first 11 (not inode 2, 11) are not file or dir
+        fileNodes = (fileNodes - ndirec) - 9;
+
+
+        printf("Number of files: %d\n\n", fileNodes );
+
+        // number of blockGroups & groupDescriptor
+        cout << dec << "Number of block groups: " << groupCount << endl << endl;
+
+        printf("****************** GROUP DESCRIPTOR TABLLE *********************\n");
+        printBGDT(groupDescriptor,groupCount);
 
         //Block Size
-        printf("Block Size: %d bytes\n\n", blockSize );
+        printf("\nBlock Size: %d bytes\n\n", blockSize );
         //State of file system
         printf("State of the Filesystem: ");
         if (super.s_state==1){printf("CLEAN\n\n" );}
@@ -277,6 +267,29 @@ int main(int  argc,  char* argv[]){
         else {
           cout << hex << "Magic number is correct: " << super.s_magic << endl << endl;;
         }
+        int inodematch=0;
+        for (int i=0;i<super.s_inodes_per_group*groupCount;i++){
+                    if (bitmapinode[i]==checkinodebitmap[i]){inodematch++;}
+
+        }
+        if (inodematch==32512)
+        cout << "InodeBitmaps matched with InodeBitmpas reported by Group Descriptor"<<endl << endl;
+
+        int blockmatch=0;
+         for (int i=0;i<totalblocks;i++){
+                     if (bitmapblock[i]==checkblockbitmap[i]){blockmatch++;}
+
+         }
+         if(blockmatch==totalblocks){
+         cout << "ALL Block Bitmaps  are macthed with the bitmap reported by group descriptor bitmaps."<< endl<<endl;}
+
+         // dirs found
+         int ndirectories=directories.size();
+         printf("Number of  directories found: %d\n\n", ndirectories);
+
+         // files found
+         int nfiles=files.size();
+         printf("Number of files found: %d\n\n", nfiles);
 
         delete(buf3);
         delete(fBlock2);
