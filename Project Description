@@ -1,0 +1,15 @@
+On your commandlien use this first:
+        g++ -std=c+11 main.cpp -o VDIChecker
+
+Once it gets compiled, use the file name of the VDI file ,you want to check the intrerity of
+             : ./VDIChecker filename
+     Example : ./VDIChecker Test-fixed-1k.vdi
+
+
+
+
+We completed the requirements of the project along with marking the unreacheable blocks and inodes as unused blocks and inodes.
+                    
+                    
+                            
+                -Rojen Shahi and Brandon Rozzi
